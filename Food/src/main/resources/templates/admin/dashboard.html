@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle}">Admin Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+        }
+        .navbar {
+            background: white;
+            padding: 20px 40px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .navbar h1 {
+            color: #FF5722;
+            font-size: 24px;
+        }
+        .navbar nav a {
+            margin-left: 20px;
+            text-decoration: none;
+            color: #666;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        .navbar nav a:hover {
+            color: #FF5722;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        .stat-card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .stat-card h3 {
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+        .stat-card .number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #333;
+        }
+        .stat-card.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .stat-card.primary h3,
+        .stat-card.primary .number {
+            color: white;
+        }
+        .welcome {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .welcome h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .welcome p {
+            color: #666;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+<div class="navbar">
+    <h1>🍕 FoodieExpress Admin</h1>
+    <nav>
+        <a href="/admin/dashboard">Dashboard</a>
+        <a href="/admin/users">Users</a>
+        <a href="/">Home</a>
+    </nav>
+</div>
+
+<div class="container">
+    <div class="stats">
+        <div class="stat-card primary">
+            <h3>Tổng người dùng</h3>
+            <div class="number" th:text="${totalUsers}">0</div>
+        </div>
+        <div class="stat-card">
+            <h3>Đơn hàng hôm nay</h3>
+            <div class="number">0</div>
+        </div>
+        <div class="stat-card">
+            <h3>Doanh thu</h3>
+            <div class="number">$0</div>
+        </div>
+        <div class="stat-card">
+            <h3>Sản phẩm</h3>
+            <div class="number">0</div>
+        </div>
+    </div>
+
+    <div class="welcome">
+        <h2>Chào mừng đến với Admin Dashboard</h2>
+        <p>
+            Hệ thống quản lý Food Delivery đang hoạt động tốt.<br>
+            Các chức năng sẽ được phát triển thêm trong giai đoạn tiếp theo.
+        </p>
+    </div>
+</div>
+</body>
+</html>
+
