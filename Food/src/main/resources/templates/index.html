@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FoodieExpress - Food Delivery API</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 60px;
+      max-width: 800px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+    h1 {
+      color: #FF5722;
+      font-size: 48px;
+      margin-bottom: 20px;
+    }
+    .emoji {
+      font-size: 80px;
+      margin-bottom: 20px;
+    }
+    p {
+      color: #666;
+      font-size: 18px;
+      line-height: 1.6;
+      margin-bottom: 30px;
+    }
+    .links {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn {
+      padding: 15px 30px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s;
+      display: inline-block;
+    }
+    .btn-primary {
+      background: #FF5722;
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #E64A19;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(255,87,34,0.4);
+    }
+    .btn-secondary {
+      background: #667eea;
+      color: white;
+    }
+    .btn-secondary:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102,126,234,0.4);
+    }
+    .status {
+      display: inline-block;
+      padding: 8px 16px;
+      background: #4CAF50;
+      color: white;
+      border-radius: 20px;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    .features {
+      margin-top: 40px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      text-align: left;
+    }
+    .feature {
+      padding: 20px;
+      background: #f5f5f5;
+      border-radius: 10px;
+    }
+    .feature h3 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+    .feature p {
+      font-size: 14px;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="emoji">🍕</div>
+  <h1>FoodieExpress</h1>
+  <span class="status">✓ API đang hoạt động</span>
+  <p>
+    Hệ thống Food Delivery API với Spring Boot & Android<br>
+    Hỗ trợ JWT Authentication, OTP Email Verification, Google OAuth2
+  </p>
+
+  <div class="links">
+    <a href="/admin/dashboard" class="btn btn-primary">Admin Dashboard</a>
+    <a href="/api/auth/test" class="btn btn-secondary">Test API</a>
+  </div>
+
+  <div class="features">
+    <div class="feature">
+      <h3>🔐 JWT Authentication</h3>
+      <p>Bảo mật với Access & Refresh Token</p>
+    </div>
+    <div class="feature">
+      <h3>📧 OTP Verification</h3>
+      <p>Xác thực email qua OTP 6 số</p>
+    </div>
+    <div class="feature">
+      <h3>🌐 Google Login</h3>
+      <p>Đăng nhập nhanh với Google OAuth2</p>
+    </div>
+    <div class="feature">
+      <h3>📱 Mobile Ready</h3>
+      <p>Android App với Material Design</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>
+
