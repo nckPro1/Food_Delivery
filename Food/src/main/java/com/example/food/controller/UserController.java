@@ -1,11 +1,13 @@
 package com.example.food.controller;
 
 import com.example.food.dto.UserDTO;
+import com.example.food.dto.ChangePasswordRequest;
 import com.example.food.model.User;
 import com.example.food.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,6 +25,9 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     /**
      * Get current user profile
@@ -147,6 +152,93 @@ public class UserController {
                             .build()
             );
         } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                    com.example.food.dto.ApiResponse.builder()
+                            .success(false)
+                            .message("Lỗi server: " + e.getMessage())
+                            .build()
+            );
+        }
+    }
+
+    /**
+     * Change user password
+     */
+    @PostMapping("/change-password")
+    public ResponseEntity<com.example.food.dto.ApiResponse> changePassword(
+            @AuthenticationPrincipal org.springframework.security.core.userdetails.User userDetails,
+            @RequestBody ChangePasswordRequest request) {
+        try {
+            System.out.println("=== CHANGE PASSWORD REQUEST ===");
+            System.out.println("User: " + userDetails.getUsername());
+            System.out.println("Current password length: " + request.getCurrentPassword().length());
+            System.out.println("New password length: " + request.getNewPassword().length());
+
+            User user = userService.getUserByEmail(userDetails.getUsername());
+            System.out.println("User found: " + user.getEmail());
+
+            // Validate current password
+            boolean currentPasswordMatches = passwordEncoder.matches(request.getCurrentPassword(), user.getPassword());
+            System.out.println("Current password matches: " + currentPasswordMatches);
+
+            if (!currentPasswordMatches) {
+                return ResponseEntity.badRequest().body(
+                        com.example.food.dto.ApiResponse.builder()
+                                .success(false)
+                                .message("Mật khẩu hiện tại không đúng")
+                                .build()
+                );
+            }
+
+            // Validate new password
+            if (request.getNewPassword().length() < 6) {
+                return ResponseEntity.badRequest().body(
+                        com.example.food.dto.ApiResponse.builder()
+                                .success(false)
+                                .message("Mật khẩu mới phải có ít nhất 6 ký tự")
+                                .build()
+                );
+            }
+
+            // Validate password confirmation
+            if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+                return ResponseEntity.badRequest().body(
+                        com.example.food.dto.ApiResponse.builder()
+                                .success(false)
+                                .message("Mật khẩu xác nhận không khớp")
+                                .build()
+                );
+            }
+
+            // Check if new password is different from current password
+            if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
+                return ResponseEntity.badRequest().body(
+                        com.example.food.dto.ApiResponse.builder()
+                                .success(false)
+                                .message("Mật khẩu mới phải khác mật khẩu hiện tại")
+                                .build()
+                );
+            }
+
+            // Update password
+            String encodedNewPassword = passwordEncoder.encode(request.getNewPassword());
+            System.out.println("Encoded new password: " + encodedNewPassword.substring(0, 20) + "...");
+
+            user.setPassword(encodedNewPassword);
+            User savedUser = userService.saveUser(user);
+
+            System.out.println("Password updated successfully for user: " + savedUser.getEmail());
+
+            return ResponseEntity.ok(
+                    com.example.food.dto.ApiResponse.builder()
+                            .success(true)
+                            .message("Đổi mật khẩu thành công")
+                            .build()
+            );
+
+        } catch (Exception e) {
+            System.out.println("❌ Error in change password: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.badRequest().body(
                     com.example.food.dto.ApiResponse.builder()
                             .success(false)

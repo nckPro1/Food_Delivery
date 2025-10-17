@@ -80,5 +80,10 @@ public class OTPService {
     public void cleanupExpiredOTPs() {
         otpRepository.deleteByExpiryTimeBefore(LocalDateTime.now());
     }
+
+    @Transactional
+    public void clearOTP(String email) {
+        otpRepository.deleteByEmail(email);
+    }
 }
 

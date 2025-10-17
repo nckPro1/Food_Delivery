@@ -15,6 +15,10 @@ public class EmailService {
 
     public void sendOTPEmail(String toEmail, String otpCode) {
         try {
+            System.out.println("=== SENDING OTP EMAIL ===");
+            System.out.println("To: " + toEmail);
+            System.out.println("OTP: " + otpCode);
+
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
@@ -27,8 +31,8 @@ public class EmailService {
                     "<body style='font-family: Arial, sans-serif; padding: 20px; background-color: #f5f5f5;'>" +
                     "  <div style='max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);'>" +
                     "    <h1 style='color: #FF5722; text-align: center;'>🍕 FoodieExpress</h1>" +
-                    "    <h2 style='color: #333;'>Xác thực tài khoản</h2>" +
-                    "    <p style='font-size: 16px; color: #666;'>Cảm ơn bạn đã đăng ký tài khoản FoodieExpress!</p>" +
+                    "    <h2 style='color: #333;'>Đặt lại mật khẩu</h2>" +
+                    "    <p style='font-size: 16px; color: #666;'>Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản FoodieExpress!</p>" +
                     "    <p style='font-size: 16px; color: #666;'>Mã OTP của bạn là:</p>" +
                     "    <div style='text-align: center; margin: 30px 0;'>" +
                     "      <span style='font-size: 32px; font-weight: bold; color: #FF5722; background-color: #FFF3E0; padding: 15px 30px; border-radius: 8px; letter-spacing: 5px;'>" +
@@ -44,12 +48,18 @@ public class EmailService {
                     "</html>";
 
             helper.setText(htmlContent, true);
-            mailSender.send(message);
 
-            System.out.println("OTP Email sent to: " + toEmail);
+            System.out.println("Sending email...");
+            mailSender.send(message);
+            System.out.println("✓ OTP Email sent successfully to: " + toEmail);
 
         } catch (MessagingException e) {
-            System.err.println("Error sending OTP email: " + e.getMessage());
+            System.err.println("❌ Error sending OTP email: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to send OTP email", e);
+        } catch (Exception e) {
+            System.err.println("❌ General error in EmailService: " + e.getMessage());
+            e.printStackTrace();
             throw new RuntimeException("Failed to send OTP email", e);
         }
     }
