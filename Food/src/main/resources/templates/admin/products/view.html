@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle}">Chi tiết sản phẩm</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Global Styles */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+        }
+
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin: 6px 15px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+        }
+
+        .sidebar .nav-link:hover {
+            color: white;
+            background: rgba(255,255,255,0.15);
+            transform: translateX(5px);
+        }
+
+        .sidebar .nav-link.active {
+            color: white;
+            background: rgba(255,255,255,0.2);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .sidebar .nav-link i {
+            margin-right: 12px;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 250px;
+            min-height: 100vh;
+            background: #f8f9fa;
+        }
+
+        /* Header Styles */
+        .main-header {
+            background: white;
+            padding: 20px 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .main-header h1 {
+            color: #333;
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn-header {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            color: white;
+        }
+
+        /* Content */
+        .content {
+            padding: 30px;
+        }
+
+        /* Product Detail Card */
+        .product-detail-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .product-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .product-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .product-status {
+            display: flex;
+            gap: 10px;
+        }
+
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+            border: 1px solid #4CAF50;
+        }
+
+        .status-featured {
+            background: rgba(255, 193, 7, 0.2);
+            color: #FFC107;
+            border: 1px solid #FFC107;
+        }
+
+        .status-unavailable {
+            background: rgba(244, 67, 54, 0.2);
+            color: #F44336;
+            border: 1px solid #F44336;
+        }
+
+        /* Product Content */
+        .product-content {
+            padding: 30px;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .product-image-section {
+            text-align: center;
+        }
+
+        .product-main-image {
+            width: 100%;
+            max-width: 400px;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .product-gallery {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .gallery-image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .gallery-image:hover {
+            transform: scale(1.1);
+        }
+
+        .product-info {
+            padding: 20px 0;
+        }
+
+        .info-group {
+            margin-bottom: 25px;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-value {
+            color: #333;
+            font-size: 1.1rem;
+            padding: 10px 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .price-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .description-value {
+            line-height: 1.6;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        /* Product Options */
+        .options-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e9ecef;
+        }
+
+        .options-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .option-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .option-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .option-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1rem;
+        }
+
+        .option-type-badge {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .option-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .option-detail {
+            text-align: center;
+        }
+
+        .option-detail-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .option-detail-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .option-price {
+            color: #667eea;
+            font-size: 1.1rem;
+        }
+
+        .option-required {
+            color: #F44336;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .btn-action {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-edit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-edit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+
+        .btn-delete {
+            background: #F44336;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #d32f2f;
+            color: white;
+        }
+
+        .btn-back {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-back:hover {
+            background: #5a6268;
+            color: white;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .product-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- Sidebar -->
+<div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
+
+<!-- Main Content -->
+<div class="main-content">
+    <!-- Header -->
+    <div class="main-header">
+        <h1><i class="fas fa-eye me-2"></i>Chi tiết sản phẩm</h1>
+        <div class="header-actions">
+            <a th:href="@{/admin/products}" class="btn-header btn-secondary">
+                <i class="fas fa-arrow-left"></i> Quay lại
+            </a>
+            <a th:href="@{/admin/products/edit/{id}(id=${product.productId})}" class="btn-header btn-primary">
+                <i class="fas fa-edit"></i> Chỉnh sửa
+            </a>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+        <div class="product-detail-card" th:if="${product}">
+            <!-- Product Header -->
+            <div class="product-header">
+                <h2 class="product-title" th:text="${product.name}">Tên sản phẩm</h2>
+                <div class="product-status">
+                        <span th:if="${product.isAvailable}" class="status-badge status-active">
+                            <i class="fas fa-check-circle me-1"></i>Có sẵn
+                        </span>
+                    <span th:if="${!product.isAvailable}" class="status-badge status-unavailable">
+                            <i class="fas fa-times-circle me-1"></i>Không có sẵn
+                        </span>
+                    <span th:if="${product.isFeatured}" class="status-badge status-featured">
+                            <i class="fas fa-star me-1"></i>Nổi bật
+                        </span>
+                </div>
+            </div>
+
+            <!-- Product Content -->
+            <div class="product-content">
+                <div class="product-grid">
+                    <!-- Product Images -->
+                    <div class="product-image-section">
+                        <img th:src="${product.imageUrl}"
+                             th:alt="${product.name}"
+                             class="product-main-image"
+                             onerror="this.src='/images/default-product.jpg'">
+
+                        <div class="product-gallery" th:if="${product.galleryUrls != null and !product.galleryUrls.isEmpty()}">
+                            <img th:each="galleryUrl : ${product.galleryUrls}"
+                                 th:src="${galleryUrl}"
+                                 th:alt="${product.name}"
+                                 class="gallery-image"
+                                 onclick="showImageModal(this.src)">
+                        </div>
+                    </div>
+
+                    <!-- Product Info -->
+                    <div class="product-info">
+                        <div class="info-group">
+                            <div class="info-label">
+                                <i class="fas fa-tag"></i>Giá
+                            </div>
+                            <div class="info-value price-value" th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + 'đ'">
+                                0đ
+                            </div>
+                        </div>
+
+                        <div class="info-group">
+                            <div class="info-label">
+                                <i class="fas fa-list"></i>Danh mục
+                            </div>
+                            <div class="info-value" th:text="${product.category?.categoryName ?: 'Chưa phân loại'}">
+                                Danh mục
+                            </div>
+                        </div>
+
+                        <div class="info-group">
+                            <div class="info-label">
+                                <i class="fas fa-clock"></i>Thời gian chuẩn bị
+                            </div>
+                            <div class="info-value" th:text="${product.preparationTime} + ' phút'">
+                                0 phút
+                            </div>
+                        </div>
+
+                        <div class="info-group">
+                            <div class="info-label">
+                                <i class="fas fa-cog"></i>Có tùy chọn
+                            </div>
+                            <div class="info-value">
+                                    <span th:if="${product.hasOptions}" class="text-success">
+                                        <i class="fas fa-check-circle me-1"></i>Có
+                                    </span>
+                                <span th:if="${!product.hasOptions}" class="text-muted">
+                                        <i class="fas fa-times-circle me-1"></i>Không
+                                    </span>
+                            </div>
+                        </div>
+
+                        <div class="info-group">
+                            <div class="info-label">
+                                <i class="fas fa-calendar"></i>Ngày tạo
+                            </div>
+                            <div class="info-value" th:text="${#temporals.format(product.createdAt, 'dd/MM/yyyy HH:mm')}">
+                                Ngày tạo
+                            </div>
+                        </div>
+
+                        <div class="info-group">
+                            <div class="info-label">
+                                <i class="fas fa-edit"></i>Cập nhật lần cuối
+                            </div>
+                            <div class="info-value" th:text="${#temporals.format(product.updatedAt, 'dd/MM/yyyy HH:mm')}">
+                                Cập nhật
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="info-group">
+                    <div class="info-label">
+                        <i class="fas fa-align-left"></i>Mô tả
+                    </div>
+                    <div class="description-value" th:text="${product.description}">
+                        Mô tả sản phẩm
+                    </div>
+                </div>
+
+                <!-- Product Options -->
+                <div class="options-section" th:if="${product.hasOptions}">
+                    <h3 class="options-title">
+                        <i class="fas fa-list-ul"></i>Tùy chọn sản phẩm
+                    </h3>
+                    <div class="options-grid" th:if="${product.options != null and !product.options.isEmpty()}">
+                        <div class="option-card" th:each="option : ${product.options}">
+                            <div class="option-header">
+                                <div class="option-name" th:text="${option.optionName}">Tên tùy chọn</div>
+                                <div class="option-type-badge" th:text="${option.optionType}">TYPE</div>
+                            </div>
+                            <div class="option-details">
+                                <div class="option-detail">
+                                    <div class="option-detail-label">Giá thêm</div>
+                                    <div class="option-detail-value option-price"
+                                         th:text="${option.extraPrice != null ? (#numbers.formatDecimal(option.extraPrice, 0, 'COMMA', 0, 'POINT') + 'đ') : 'Miễn phí'}">
+                                        0đ
+                                    </div>
+                                </div>
+                                <div class="option-detail">
+                                    <div class="option-detail-label">Bắt buộc</div>
+                                    <div class="option-detail-value" th:class="${option.isRequired ? 'option-required' : 'text-success'}">
+                                            <span th:if="${option.isRequired}">
+                                                <i class="fas fa-check-circle me-1"></i>Có
+                                            </span>
+                                        <span th:if="${!option.isRequired}">
+                                                <i class="fas fa-times-circle me-1"></i>Không
+                                            </span>
+                                    </div>
+                                </div>
+                                <div class="option-detail">
+                                    <div class="option-detail-label">Số lượng tối đa</div>
+                                    <div class="option-detail-value" th:text="${option.maxSelections}">1</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div th:if="${product.options == null or product.options.isEmpty()}" class="text-center text-muted">
+                        <i class="fas fa-info-circle me-2"></i>Chưa có tùy chọn nào
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <a th:href="@{/admin/products}" class="btn-action btn-back">
+                <i class="fas fa-arrow-left"></i> Quay lại danh sách
+            </a>
+            <a th:href="@{/admin/products/edit/{id}(id=${product.productId})}" class="btn-action btn-edit">
+                <i class="fas fa-edit"></i> Chỉnh sửa
+            </a>
+            <a th:href="@{/admin/products/delete/{id}(id=${product.productId})}"
+               class="btn-action btn-delete"
+               onclick="return confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')">
+                <i class="fas fa-trash"></i> Xóa
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Hình ảnh sản phẩm</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" class="img-fluid" style="max-height: 500px;">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function showImageModal(src) {
+        document.getElementById('modalImage').src = src;
+        new bootstrap.Modal(document.getElementById('imageModal')).show();
+    }
+</script>
+</body>
+</html>

@@ -66,6 +66,18 @@ public class UserController {
             if (userDTO.getAvatarUrl() != null) {
                 user.setAvatarUrl(userDTO.getAvatarUrl());
             }
+            if (userDTO.getUserCity() != null) {
+                user.setUserCity(userDTO.getUserCity());
+            }
+            if (userDTO.getUserDistrict() != null) {
+                user.setUserDistrict(userDTO.getUserDistrict());
+            }
+            if (userDTO.getUserWard() != null) {
+                user.setUserWard(userDTO.getUserWard());
+            }
+            if (userDTO.getUserStreet() != null) {
+                user.setUserStreet(userDTO.getUserStreet());
+            }
 
             // Save updated user
             User updatedUser = userService.saveUser(user);
@@ -81,13 +93,13 @@ public class UserController {
      * Upload user avatar
      */
     @PostMapping("/upload-avatar")
-    public ResponseEntity<com.example.food.dto.ApiResponse> uploadAvatar(
+    public ResponseEntity<com.example.food.dto.ApiResponse<String>> uploadAvatar(
             @AuthenticationPrincipal org.springframework.security.core.userdetails.User userDetails,
             @RequestParam("file") MultipartFile file) {
         try {
             if (file.isEmpty()) {
                 return ResponseEntity.badRequest().body(
-                        com.example.food.dto.ApiResponse.builder()
+                        com.example.food.dto.ApiResponse.<String>builder()
                                 .success(false)
                                 .message("File không được để trống")
                                 .build()
@@ -98,7 +110,7 @@ public class UserController {
             String contentType = file.getContentType();
             if (contentType == null || !contentType.startsWith("image/")) {
                 return ResponseEntity.badRequest().body(
-                        com.example.food.dto.ApiResponse.builder()
+                        com.example.food.dto.ApiResponse.<String>builder()
                                 .success(false)
                                 .message("Chỉ chấp nhận file ảnh")
                                 .build()
@@ -109,7 +121,7 @@ public class UserController {
             long maxSize = 10 * 1024 * 1024; // 10MB
             if (file.getSize() > maxSize) {
                 return ResponseEntity.badRequest().body(
-                        com.example.food.dto.ApiResponse.builder()
+                        com.example.food.dto.ApiResponse.<String>builder()
                                 .success(false)
                                 .message("File quá lớn. Kích thước tối đa là 10MB")
                                 .build()
@@ -138,7 +150,7 @@ public class UserController {
             user.setAvatarUrl(avatarUrl);
             userService.saveUser(user);
 
-            return ResponseEntity.ok(com.example.food.dto.ApiResponse.builder()
+            return ResponseEntity.ok(com.example.food.dto.ApiResponse.<String>builder()
                     .success(true)
                     .message("Upload avatar thành công")
                     .data(avatarUrl)
@@ -146,14 +158,14 @@ public class UserController {
 
         } catch (IOException e) {
             return ResponseEntity.badRequest().body(
-                    com.example.food.dto.ApiResponse.builder()
+                    com.example.food.dto.ApiResponse.<String>builder()
                             .success(false)
                             .message("Lỗi upload file: " + e.getMessage())
                             .build()
             );
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(
-                    com.example.food.dto.ApiResponse.builder()
+                    com.example.food.dto.ApiResponse.<String>builder()
                             .success(false)
                             .message("Lỗi server: " + e.getMessage())
                             .build()
@@ -165,7 +177,7 @@ public class UserController {
      * Change user password
      */
     @PostMapping("/change-password")
-    public ResponseEntity<com.example.food.dto.ApiResponse> changePassword(
+    public ResponseEntity<com.example.food.dto.ApiResponse<Void>> changePassword(
             @AuthenticationPrincipal org.springframework.security.core.userdetails.User userDetails,
             @RequestBody ChangePasswordRequest request) {
         try {
@@ -183,7 +195,7 @@ public class UserController {
 
             if (!currentPasswordMatches) {
                 return ResponseEntity.badRequest().body(
-                        com.example.food.dto.ApiResponse.builder()
+                        com.example.food.dto.ApiResponse.<Void>builder()
                                 .success(false)
                                 .message("Mật khẩu hiện tại không đúng")
                                 .build()
@@ -193,7 +205,7 @@ public class UserController {
             // Validate new password
             if (request.getNewPassword().length() < 6) {
                 return ResponseEntity.badRequest().body(
-                        com.example.food.dto.ApiResponse.builder()
+                        com.example.food.dto.ApiResponse.<Void>builder()
                                 .success(false)
                                 .message("Mật khẩu mới phải có ít nhất 6 ký tự")
                                 .build()
@@ -203,7 +215,7 @@ public class UserController {
             // Validate password confirmation
             if (!request.getNewPassword().equals(request.getConfirmPassword())) {
                 return ResponseEntity.badRequest().body(
-                        com.example.food.dto.ApiResponse.builder()
+                        com.example.food.dto.ApiResponse.<Void>builder()
                                 .success(false)
                                 .message("Mật khẩu xác nhận không khớp")
                                 .build()
@@ -213,7 +225,7 @@ public class UserController {
             // Check if new password is different from current password
             if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
                 return ResponseEntity.badRequest().body(
-                        com.example.food.dto.ApiResponse.builder()
+                        com.example.food.dto.ApiResponse.<Void>builder()
                                 .success(false)
                                 .message("Mật khẩu mới phải khác mật khẩu hiện tại")
                                 .build()
@@ -230,7 +242,7 @@ public class UserController {
             System.out.println("Password updated successfully for user: " + savedUser.getEmail());
 
             return ResponseEntity.ok(
-                    com.example.food.dto.ApiResponse.builder()
+                    com.example.food.dto.ApiResponse.<Void>builder()
                             .success(true)
                             .message("Đổi mật khẩu thành công")
                             .build()
@@ -240,7 +252,7 @@ public class UserController {
             System.out.println("❌ Error in change password: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.badRequest().body(
-                    com.example.food.dto.ApiResponse.builder()
+                    com.example.food.dto.ApiResponse.<Void>builder()
                             .success(false)
                             .message("Lỗi server: " + e.getMessage())
                             .build()

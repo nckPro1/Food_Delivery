@@ -1,0 +1,72 @@
+<!-- Sidebar Fragment -->
+<div th:fragment="sidebar">
+  <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+    <div class="position-sticky pt-3">
+      <!-- Logo/Brand -->
+      <div class="text-center mb-4">
+        <h4 class="text-white mb-0">
+          <i class="fas fa-utensils me-2"></i>
+          Food Admin
+        </h4>
+        <small class="text-white-50">Management Panel</small>
+      </div>
+
+      <!-- Navigation Menu -->
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a class="nav-link" href="/admin/dashboard" th:classappend="${#strings.startsWith(pageTitle, 'Dashboard')} ? 'active' : ''">
+            <i class="fas fa-chart-bar me-2"></i>
+            Dashboard
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/admin/products" th:classappend="${#strings.startsWith(pageTitle, 'Sản phẩm')} ? 'active' : ''">
+            <i class="fas fa-pizza-slice me-2"></i>
+            Sản phẩm
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/admin/categories" th:classappend="${#strings.startsWith(pageTitle, 'Danh mục')} ? 'active' : ''">
+            <i class="fas fa-folder me-2"></i>
+            Danh mục
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/admin/users" th:classappend="${#strings.startsWith(pageTitle, 'Người dùng')} ? 'active' : ''">
+            <i class="fas fa-users me-2"></i>
+            Người dùng
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/admin/orders" th:classappend="${#strings.startsWith(pageTitle, 'Đơn hàng')} ? 'active' : ''">
+            <i class="fas fa-clipboard-list me-2"></i>
+            Đơn hàng
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/admin/shipping-fees" th:classappend="${#strings.startsWith(pageTitle, 'Phí ship')} ? 'active' : ''">
+            <i class="fas fa-shipping-fast me-2"></i>
+            Phí ship
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/admin/store-settings" th:classappend="${#strings.startsWith(pageTitle, 'Cài đặt nhà hàng')} ? 'active' : ''">
+            <i class="fas fa-store me-2"></i>
+            Cài đặt nhà hàng
+          </a>
+        </li>
+
+        <!-- Divider -->
+        <hr class="my-3" style="border-color: rgba(255,255,255,0.2);">
+
+        <!-- Logout -->
+        <li class="nav-item">
+          <a class="nav-link" href="/admin/auth/logout">
+            <i class="fas fa-sign-out-alt me-2"></i>
+            Đăng xuất
+          </a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+</div>

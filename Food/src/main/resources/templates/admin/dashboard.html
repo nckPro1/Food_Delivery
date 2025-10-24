@@ -1,131 +1,349 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${pageTitle}">Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        * {
+        /* Global Styles */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f8f9fa;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
         }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f5f7fa;
+
+        /* Sidebar Styles */
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
         }
-        .navbar {
-            background: white;
-            padding: 20px 40px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin: 6px 15px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            font-weight: 500;
             display: flex;
-            justify-content: space-between;
             align-items: center;
         }
-        .navbar h1 {
-            color: #FF5722;
-            font-size: 24px;
-        }
-        .navbar nav a {
-            margin-left: 20px;
-            text-decoration: none;
-            color: #666;
-            font-weight: 500;
-            transition: color 0.3s;
-        }
-        .navbar nav a:hover {
-            color: #FF5722;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 40px auto;
-            padding: 0 20px;
-        }
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 40px;
-        }
-        .stat-card {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .stat-card h3 {
-            color: #666;
-            font-size: 14px;
-            font-weight: 500;
-            margin-bottom: 10px;
-        }
-        .stat-card .number {
-            font-size: 36px;
-            font-weight: bold;
-            color: #333;
-        }
-        .stat-card.primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        .stat-card.primary h3,
-        .stat-card.primary .number {
+
+        .sidebar .nav-link:hover {
             color: white;
+            background: rgba(255,255,255,0.15);
+            transform: translateX(5px);
         }
-        .welcome {
-            background: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+
+        .sidebar .nav-link.active {
+            color: white;
+            background: rgba(255,255,255,0.2);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .sidebar .nav-link i {
+            width: 20px;
             text-align: center;
         }
-        .welcome h2 {
-            color: #333;
-            margin-bottom: 20px;
+
+        /* Header Styles */
+        .main-header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-bottom: 1px solid #e9ecef;
+            padding: 15px 0;
+            margin-left: 0;
         }
-        .welcome p {
-            color: #666;
-            line-height: 1.6;
+
+        .main-header h1 {
+            color: #2c3e50;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .main-header .btn-outline-danger {
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .main-header .btn-outline-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 0;
+            padding-top: 20px;
+        }
+
+        /* Statistics Cards */
+        .card-stat {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .card-stat:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .bg-primary-gradient { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .bg-success-gradient { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+        .bg-warning-gradient { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .bg-info-gradient { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: relative;
+                min-height: auto;
+            }
+            .main-content {
+                margin-left: 0;
+            }
         }
     </style>
 </head>
 <body>
-<div class="navbar">
-    <h1>🍕 FoodieExpress Admin</h1>
-    <nav>
-        <a href="/admin/dashboard">Dashboard</a>
-        <a href="/admin/users">Users</a>
-        <a href="/">Home</a>
-    </nav>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
+
+        <!-- Main content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+            <!-- Header -->
+            <div class="main-header">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center">
+                    <h1 th:text="${pageTitle}">Dashboard</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            <a href="/admin/auth/logout" class="btn btn-sm btn-outline-danger">
+                                <i class="fas fa-sign-out-alt me-1"></i>
+                                Đăng xuất
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Alert -->
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <span th:text="${error}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card card-stat h-100">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                        Tổng người dùng
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${totalUsers}">0</div>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="stat-icon bg-primary-gradient">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card card-stat h-100">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                        Tổng sản phẩm
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${totalProducts}">0</div>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="stat-icon bg-success-gradient">
+                                        <i class="fas fa-box"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card card-stat h-100">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                        Tổng danh mục
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${totalCategories}">0</div>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="stat-icon bg-warning-gradient">
+                                        <i class="fas fa-tags"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card card-stat h-100">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                        Sản phẩm nổi bật
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${#lists.size(featuredProducts)}">0</div>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="stat-icon bg-info-gradient">
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Featured Products -->
+            <div class="row">
+                <div class="col-lg-6 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="m-0 font-weight-bold text-primary">
+                                <i class="fas fa-star me-2"></i>
+                                Sản phẩm nổi bật
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div th:if="${#lists.isEmpty(featuredProducts)}" class="text-center text-muted">
+                                <i class="fas fa-star fa-2x mb-3"></i>
+                                <p>Chưa có sản phẩm nổi bật</p>
+                            </div>
+                            <div th:each="product : ${featuredProducts}" class="d-flex align-items-center mb-3">
+                                <img th:src="${product.imageUrl}" th:alt="${product.name}"
+                                     class="rounded me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1" th:text="${product.name}">Product Name</h6>
+                                    <small class="text-muted" th:text="${product.price} + ' VNĐ'">Price</small>
+                                </div>
+                                <span class="badge bg-warning">
+                                        <i class="fas fa-star"></i>
+                                    </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="m-0 font-weight-bold text-success">
+                                <i class="fas fa-tags me-2"></i>
+                                Danh mục có sản phẩm
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div th:if="${#lists.isEmpty(categoriesWithProducts)}" class="text-center text-muted">
+                                <i class="fas fa-tags fa-2x mb-3"></i>
+                                <p>Chưa có danh mục nào</p>
+                            </div>
+                            <div th:each="category : ${categoriesWithProducts}" class="d-flex align-items-center mb-3">
+                                <img th:src="${category.categoryImageUrl}" th:alt="${category.categoryName}"
+                                     class="rounded me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1" th:text="${category.categoryName}">Category Name</h6>
+                                    <small class="text-muted" th:text="${category.description}">Description</small>
+                                </div>
+                                <span class="badge bg-success">
+                                        <i class="fas fa-check"></i>
+                                    </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products with Gallery -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="m-0 font-weight-bold text-info">
+                                <i class="fas fa-images me-2"></i>
+                                Sản phẩm có nhiều ảnh
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div th:if="${#lists.isEmpty(productsWithGallery)}" class="text-center text-muted">
+                                <i class="fas fa-images fa-2x mb-3"></i>
+                                <p>Chưa có sản phẩm nào có gallery</p>
+                            </div>
+                            <div class="row" th:if="${not #lists.isEmpty(productsWithGallery)}">
+                                <div th:each="product : ${productsWithGallery}" class="col-md-4 mb-3">
+                                    <div class="card">
+                                        <img th:src="${product.imageUrl}" th:alt="${product.name}"
+                                             class="card-img-top" style="height: 200px; object-fit: cover;">
+                                        <div class="card-body">
+                                            <h6 class="card-title" th:text="${product.name}">Product Name</h6>
+                                            <p class="card-text">
+                                                <small class="text-muted" th:text="${product.price} + ' VNĐ'">Price</small>
+                                            </p>
+                                            <span class="badge bg-info">
+                                                    <i class="fas fa-images me-1"></i>
+                                                    <span th:text="${#lists.size(product.galleryUrlsList)}">0</span> ảnh
+                                                </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
 </div>
 
-<div class="container">
-    <div class="stats">
-        <div class="stat-card primary">
-            <h3>Tổng người dùng</h3>
-            <div class="number" th:text="${totalUsers}">0</div>
-        </div>
-        <div class="stat-card">
-            <h3>Đơn hàng hôm nay</h3>
-            <div class="number">0</div>
-        </div>
-        <div class="stat-card">
-            <h3>Doanh thu</h3>
-            <div class="number">$0</div>
-        </div>
-        <div class="stat-card">
-            <h3>Sản phẩm</h3>
-            <div class="number">0</div>
-        </div>
-    </div>
-
-    <div class="welcome">
-        <h2>Chào mừng đến với Admin Dashboard</h2>
-        <p>
-            Hệ thống quản lý Food Delivery đang hoạt động tốt.<br>
-            Các chức năng sẽ được phát triển thêm trong giai đoạn tiếp theo.
-        </p>
-    </div>
-</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-

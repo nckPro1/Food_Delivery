@@ -1,11 +1,22 @@
 package com.example.food.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users")
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class User {
 
     @Id
@@ -19,6 +30,11 @@ public class User {
     @Column(name = "password", nullable = false)
     private String password;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "auth_provider", nullable = false)
+    @Builder.Default
+    private AuthProvider authProvider = AuthProvider.EMAIL;
+
     @Column(name = "full_name")
     private String fullName;
 
@@ -31,16 +47,44 @@ public class User {
     @Column(name = "avatar_url")
     private String avatarUrl;
 
+    @Column(name = "user_city")
+    private String userCity;
+
+    @Column(name = "user_district")
+    private String userDistrict;
+
+    @Column(name = "user_ward")
+    private String userWard;
+
+    @Column(name = "user_street")
+    private String userStreet;
+
     @Column(name = "role_id")
-    private Integer roleId = 1; // Mặc định role user = 1
+    @Builder.Default
+    private Integer roleId = 2; // Mặc định role user = 2
 
-    // Constructors
-    public User() {}
+    @Column(name = "is_active")
+    @Builder.Default
+    private Boolean isActive = true;
 
-    public User(String email, String password, String fullName) {
-        this.email = email;
-        this.password = password;
-        this.fullName = fullName;
-        this.roleId = 1;
+    @Column(name = "email_verified")
+    @Builder.Default
+    private Boolean emailVerified = false;
+
+    @CreationTimestamp
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    // Helper methods
+    public boolean hasAddress() {
+        return address != null && !address.trim().isEmpty();
+    }
+
+    public boolean isAdmin() {
+        return roleId != null && roleId == 1; // Admin role = 1
     }
 }
