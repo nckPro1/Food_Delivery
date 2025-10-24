@@ -11,6 +11,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -50,7 +52,26 @@ public class UserService implements UserDetailsService {
                 .address(user.getAddress())
                 .avatarUrl(user.getAvatarUrl())
                 .roleId(user.getRoleId())
+                .authProvider(user.getAuthProvider())
+                .userCity(user.getUserCity())
+                .userDistrict(user.getUserDistrict())
+                .userWard(user.getUserWard())
+                .userStreet(user.getUserStreet())
                 .build();
+    }
+
+    /**
+     * Lấy tất cả người dùng
+     */
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+    /**
+     * Lấy người dùng theo ID
+     */
+    public Optional<User> getUserById(Long userId) {
+        return userRepository.findById(userId);
     }
 }
 

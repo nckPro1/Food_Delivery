@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${pageTitle}">Tạo danh mục mới</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    /* Global Styles */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background-color: #f8f9fa;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Sidebar Styles */
+    .sidebar {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1000;
+    }
+
+    .sidebar .nav-link {
+      color: rgba(255,255,255,0.8);
+      padding: 15px 20px;
+      border-radius: 12px;
+      margin: 6px 15px;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+    }
+
+    .sidebar .nav-link:hover {
+      color: white;
+      background: rgba(255,255,255,0.15);
+      transform: translateX(5px);
+    }
+
+    .sidebar .nav-link.active {
+      color: white;
+      background: rgba(255,255,255,0.2);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    /* Header Styles */
+    .main-header {
+      background: white;
+      padding: 20px 0;
+      border-bottom: 1px solid #e9ecef;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .main-header h1 {
+      color: #2c3e50;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    /* Main Content */
+    .main-content {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      margin: 20px;
+      padding: 30px;
+    }
+
+    /* Form Sections */
+    .form-section {
+      background: #f8f9fa;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      border: 1px solid #e9ecef;
+    }
+
+    .form-section h5 {
+      color: #495057;
+      font-weight: 600;
+      border-bottom: 2px solid #007bff;
+      padding-bottom: 10px;
+    }
+
+    /* Image Preview */
+    .image-preview {
+      max-width: 200px;
+      max-height: 200px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    /* Button Styles */
+    .btn {
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #007bff, #0056b3);
+      border: none;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+    }
+
+    .btn-outline-secondary {
+      border: 2px solid #6c757d;
+      color: #6c757d;
+    }
+
+    .btn-outline-secondary:hover {
+      background-color: #6c757d;
+      border-color: #6c757d;
+      transform: translateY(-2px);
+    }
+
+    /* Alert Styles */
+    .alert {
+      border-radius: 8px;
+      border: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    /* Form Controls */
+    .form-control, .form-select {
+      border-radius: 8px;
+      border: 2px solid #e9ecef;
+      padding: 12px 15px;
+      transition: all 0.3s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+      border-color: #007bff;
+      box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+    }
+  </style>
+</head>
+<body>
+<div class="container-fluid">
+  <div class="row">
+    <!-- Sidebar -->
+    <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
+
+    <!-- Main content -->
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+      <div class="main-header">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center">
+          <h1 th:text="${pageTitle}">Tạo danh mục mới</h1>
+          <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+              <a href="/admin/categories" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>
+                Quay lại
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="main-content">
+        <!-- Alert Container -->
+        <div id="alertContainer"></div>
+
+        <!-- Error Alert -->
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          <span th:text="${error}"></span>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <!-- Success Alert -->
+        <div id="successAlert" class="alert alert-success alert-dismissible fade show d-none" role="alert">
+          <i class="fas fa-check-circle me-2"></i>
+          <span id="successMessage">Danh mục đã được tạo thành công!</span>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <form id="categoryForm" method="post" action="/admin/categories/create" enctype="multipart/form-data">
+          <!-- Basic Information -->
+          <div class="form-section p-4">
+            <h5 class="mb-3">
+              <i class="fas fa-info-circle me-2 text-primary"></i>
+              Thông tin cơ bản
+            </h5>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="categoryName" class="form-label">Tên danh mục <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="categoryName" name="categoryName" required>
+                  <div id="categoryNameFeedback" class="invalid-feedback"></div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="sortOrder" class="form-label">Thứ tự hiển thị</label>
+                  <input type="number" class="form-control" id="sortOrder" name="sortOrder" min="0" value="0">
+                </div>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="description" class="form-label">Mô tả</label>
+              <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="isActive" name="isActive" checked>
+              <label class="form-check-label" for="isActive">
+                Danh mục hoạt động
+              </label>
+            </div>
+          </div>
+
+          <!-- Image -->
+          <div class="form-section p-4">
+            <h5 class="mb-3">
+              <i class="fas fa-image me-2 text-primary"></i>
+              Hình ảnh danh mục
+            </h5>
+            <div class="mb-3">
+              <label for="categoryImage" class="form-label">Ảnh danh mục</label>
+              <input type="file" class="form-control" id="categoryImage" name="imageFile" accept="image/*">
+              <div class="mt-2">
+                <img id="imagePreview" class="image-preview d-none" alt="Preview">
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="form-section p-4">
+            <div class="d-flex justify-content-end gap-2">
+              <a href="/admin/categories" class="btn btn-outline-secondary">
+                <i class="fas fa-times me-1"></i>
+                Hủy
+              </a>
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-1"></i>
+                Tạo danh mục
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Image preview functionality
+  document.getElementById('categoryImage').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        showAlert('Vui lòng chọn file ảnh hợp lệ', 'danger');
+        e.target.value = '';
+        return;
+      }
+
+      // Validate file size (10MB)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        showAlert('File quá lớn. Kích thước tối đa là 10MB', 'danger');
+        e.target.value = '';
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const preview = document.getElementById('imagePreview');
+        preview.src = e.target.result;
+        preview.classList.remove('d-none');
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  // Form validation
+  function validateForm() {
+    const categoryName = document.getElementById('categoryName').value.trim();
+
+    if (!categoryName) {
+      showAlert('Vui lòng nhập tên danh mục', 'danger');
+      document.getElementById('categoryName').focus();
+      return false;
+    }
+
+    if (categoryName.length < 2) {
+      showAlert('Tên danh mục phải có ít nhất 2 ký tự', 'danger');
+      document.getElementById('categoryName').focus();
+      return false;
+    }
+
+    if (categoryName.length > 100) {
+      showAlert('Tên danh mục không được vượt quá 100 ký tự', 'danger');
+      document.getElementById('categoryName').focus();
+      return false;
+    }
+
+    return true;
+  }
+
+  // Show alert function
+  function showAlert(message, type) {
+    const alertContainer = document.getElementById('alertContainer');
+    const alertId = 'alert-' + Date.now();
+
+    const alertHtml = `
+      <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    `;
+
+    alertContainer.innerHTML = alertHtml;
+
+    // Auto dismiss after 5 seconds
+    setTimeout(() => {
+      const alert = document.getElementById(alertId);
+      if (alert) {
+        const bsAlert = new bootstrap.Alert(alert);
+        bsAlert.close();
+      }
+    }, 5000);
+  }
+
+  // Form submission with loading state
+  document.getElementById('categoryForm').addEventListener('submit', function(e) {
+    if (!validateForm()) {
+      e.preventDefault();
+      return;
+    }
+
+    const submitBtn = document.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+
+    // Show loading state
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Đang tạo...';
+
+    // Let form submit naturally - server will handle redirect
+    // The loading state will be reset when page reloads
+  });
+
+  // Real-time validation
+  document.getElementById('categoryName').addEventListener('input', function(e) {
+    const value = e.target.value.trim();
+    const feedback = document.getElementById('categoryNameFeedback');
+
+    if (value.length > 0 && value.length < 2) {
+      feedback.textContent = 'Tên danh mục phải có ít nhất 2 ký tự';
+      feedback.className = 'invalid-feedback d-block';
+      e.target.classList.add('is-invalid');
+    } else if (value.length > 100) {
+      feedback.textContent = 'Tên danh mục không được vượt quá 100 ký tự';
+      feedback.className = 'invalid-feedback d-block';
+      e.target.classList.add('is-invalid');
+    } else {
+      feedback.textContent = '';
+      feedback.className = 'invalid-feedback';
+      e.target.classList.remove('is-invalid');
+    }
+  });
+</script>
+</body>
+</html>

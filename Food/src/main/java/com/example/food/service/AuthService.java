@@ -1,15 +1,16 @@
 package com.example.food.service;
 
 import com.example.food.dto.*;
+import com.example.food.model.AuthProvider;
 import com.example.food.model.RefreshToken;
 import com.example.food.model.User;
 import com.example.food.repository.RefreshTokenRepository;
 import com.example.food.repository.UserRepository;
 import com.example.food.security.JwtTokenProvider;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
+@Slf4j
 public class AuthService {
 
     @Autowired
@@ -43,11 +45,21 @@ public class AuthService {
 
     @Transactional
     public ApiResponse register(RegisterRequest request) {
-        // Check if email already exists
-        if (userRepository.existsByEmail(request.getEmail())) {
+        // Check if email already exists with EMAIL auth provider
+        User existingUser = userRepository.findByEmail(request.getEmail()).orElse(null);
+        if (existingUser != null && existingUser.getAuthProvider() == AuthProvider.EMAIL) {
             return ApiResponse.builder()
                     .success(false)
-                    .message("Email đã tồn tại!")
+                    .message("Email đã được đăng ký với phương thức đăng ký thông thường!")
+                    .build();
+        }
+
+        // If user exists with Google auth provider, allow registration to merge accounts
+        if (existingUser != null && existingUser.getAuthProvider() == AuthProvider.GOOGLE) {
+            return ApiResponse.builder()
+                    .success(true)
+                    .message("Email này đã được đăng ký bằng Google. Bạn có thể tiếp tục để liên kết tài khoản.")
+                    .data("ACCOUNT_MERGE_REQUIRED")
                     .build();
         }
 
@@ -58,6 +70,7 @@ public class AuthService {
         user.setFullName(request.getFullName());
         user.setPhoneNumber(request.getPhoneNumber());
         user.setRoleId(1); // Default USER role
+        user.setAuthProvider(AuthProvider.EMAIL); // Set auth provider
 
         // Don't save user yet, wait for OTP verification
 
@@ -83,23 +96,37 @@ public class AuthService {
                     .build();
         }
 
-        // Check if user already exists
-        if (userRepository.existsByEmail(otpRequest.getEmail())) {
+        // Check if user already exists with EMAIL auth provider
+        User existingUser = userRepository.findByEmail(otpRequest.getEmail()).orElse(null);
+        if (existingUser != null && existingUser.getAuthProvider() == AuthProvider.EMAIL) {
             return AuthResponse.builder()
                     .success(false)
-                    .message("Email đã được đăng ký!")
+                    .message("Email đã được đăng ký với phương thức đăng ký thông thường!")
                     .build();
         }
 
-        // Create and save user
-        User user = new User();
-        user.setEmail(registerRequest.getEmail());
-        user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
-        user.setFullName(registerRequest.getFullName());
-        user.setPhoneNumber(registerRequest.getPhoneNumber());
-        user.setRoleId(1);
+        // Handle account merge or create new user
+        User user;
+        if (existingUser != null && existingUser.getAuthProvider() == AuthProvider.GOOGLE) {
+            // Merge with existing Google account
+            user = existingUser;
+            user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+            user.setFullName(registerRequest.getFullName());
+            user.setPhoneNumber(registerRequest.getPhoneNumber());
+            // Keep Google auth provider but allow email login
+            user.setAuthProvider(AuthProvider.EMAIL); // Switch to EMAIL auth provider
+        } else {
+            // Create new user
+            user = new User();
+            user.setEmail(registerRequest.getEmail());
+            user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+            user.setFullName(registerRequest.getFullName());
+            user.setPhoneNumber(registerRequest.getPhoneNumber());
+            user.setRoleId(1);
+            user.setAuthProvider(AuthProvider.EMAIL); // Set auth provider
+        }
 
-        User savedUser = userRepository.save(user);
+        userRepository.save(user);
 
         // KHÔNG generate tokens - user phải login sau
         return AuthResponse.builder()
@@ -124,6 +151,24 @@ public class AuthService {
                         .build();
             }
 
+            // Check if user can login with email/password
+            if (user.getAuthProvider() == AuthProvider.GOOGLE) {
+                System.out.println("❌ ERROR: User registered with Google, please use Google login!");
+                return AuthResponse.builder()
+                        .success(false)
+                        .message("Tài khoản này được đăng ký bằng Google. Vui lòng sử dụng đăng nhập Google!")
+                        .build();
+            }
+
+            // Check if user has a valid password (not Google-generated)
+            if (user.getPassword().startsWith("GOOGLE_USER_") || user.getPassword().startsWith("OAUTH2_USER_")) {
+                System.out.println("❌ ERROR: User has Google-generated password, please use Google login!");
+                return AuthResponse.builder()
+                        .success(false)
+                        .message("Tài khoản này chỉ hỗ trợ đăng nhập Google. Vui lòng sử dụng đăng nhập Google!")
+                        .build();
+            }
+
             System.out.println("✓ User found: " + user.getEmail());
             System.out.println("✓ Password in DB starts with: " + user.getPassword().substring(0, Math.min(20, user.getPassword().length())) + "...");
             System.out.println("✓ Password DB length: " + user.getPassword().length());
@@ -144,7 +189,7 @@ public class AuthService {
 
             // Authenticate user with Spring Security
             System.out.println("→ Proceeding to Spring Security authentication...");
-            Authentication authentication = authenticationManager.authenticate(
+            authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
             );
             System.out.println("✓ Spring Security authentication SUCCESS!");
@@ -179,23 +224,27 @@ public class AuthService {
 
     @Transactional
     public String createRefreshToken(User user) {
-        // Delete old refresh tokens
-        refreshTokenRepository.deleteByUser(user);
+        try {
+            // Delete old refresh tokens
+            refreshTokenRepository.deleteByUser(user);
 
-        // Create new refresh token
-        String tokenValue = UUID.randomUUID().toString();
-        LocalDateTime expiryDate = LocalDateTime.now().plusDays(7);
+            // Create new refresh token
+            String tokenValue = UUID.randomUUID().toString();
+            LocalDateTime expiryDate = LocalDateTime.now().plusDays(7);
 
-        RefreshToken refreshToken = RefreshToken.builder()
-                .token(tokenValue)
-                .user(user)
-                .expiryDate(expiryDate)
-                .createdAt(LocalDateTime.now())
-                .build();
+            RefreshToken refreshToken = RefreshToken.builder()
+                    .token(tokenValue)
+                    .user(user)
+                    .expiresAt(expiryDate)
+                    .build();
 
-        refreshTokenRepository.save(refreshToken);
+            refreshTokenRepository.save(refreshToken);
 
-        return tokenValue;
+            return tokenValue;
+        } catch (Exception e) {
+            log.error("Error creating refresh token for user {}: {}", user.getEmail(), e.getMessage());
+            throw new RuntimeException("Failed to create refresh token", e);
+        }
     }
 
     public AuthResponse refreshAccessToken(String refreshTokenValue) {

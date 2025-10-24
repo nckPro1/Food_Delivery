@@ -29,11 +29,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+        
+        // Only apply JWT filter to API routes, skip admin routes
+        String requestURI = request.getRequestURI();
+        if (requestURI.startsWith("/admin/") || requestURI.startsWith("/error") || requestURI.equals("/")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+        
         try {
             String jwt = getJwtFromRequest(request);
+            
+            logger.debug("JWT Filter - Request URI: " + request.getRequestURI() + ", JWT Token present: " + (jwt != null));
 
             if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
                 String email = tokenProvider.getEmailFromToken(jwt);
+                logger.debug("JWT Filter - Valid token for email: " + email);
 
                 UserDetails userDetails = userService.loadUserByUsername(email);
                 UsernamePasswordAuthenticationToken authentication =
@@ -41,6 +52,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+                logger.debug("JWT Filter - Authentication set for user: " + email);
+            } else {
+                logger.debug("JWT Filter - No valid JWT token found");
             }
         } catch (Exception ex) {
             logger.error("Could not set user authentication in security context", ex);

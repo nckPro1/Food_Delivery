@@ -1,7 +1,6 @@
 package com.example.food.security;
 
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -22,10 +21,16 @@ public class JwtTokenProvider {
     private long refreshTokenExpirationMs;
 
     private SecretKey getSigningKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(
-                java.util.Base64.getEncoder().encodeToString(jwtSecret.getBytes())
-        );
-        return Keys.hmacShaKeyFor(jwtSecret.getBytes());
+        // Fix: Use proper key generation for HMAC-SHA256
+        // Ensure the secret is at least 256 bits (32 bytes) for HS256
+        byte[] keyBytes;
+        if (jwtSecret.length() < 32) {
+            // Pad the secret to ensure minimum length
+            keyBytes = java.util.Arrays.copyOf(jwtSecret.getBytes(), 32);
+        } else {
+            keyBytes = jwtSecret.getBytes();
+        }
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 
     public String generateToken(String email) {

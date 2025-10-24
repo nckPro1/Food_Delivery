@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${pageTitle}">Quản lý đơn hàng</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    /* Global Styles */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background-color: #f8f9fa;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Sidebar Styles */
+    .sidebar {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1000;
+    }
+
+    .sidebar .nav-link {
+      color: rgba(255,255,255,0.8);
+      padding: 15px 20px;
+      border-radius: 12px;
+      margin: 6px 15px;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+    }
+
+    .sidebar .nav-link:hover {
+      color: white;
+      background: rgba(255,255,255,0.15);
+      transform: translateX(5px);
+    }
+
+    .sidebar .nav-link.active {
+      color: white;
+      background: rgba(255,255,255,0.2);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    /* Header Styles */
+    .main-header {
+      background: white;
+      padding: 20px 0;
+      border-bottom: 1px solid #e9ecef;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .main-header h1 {
+      color: #2c3e50;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    /* Stats Cards */
+    .stats-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      border-left: 4px solid #007bff;
+      transition: transform 0.3s ease;
+    }
+
+    .stats-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .stats-card.pending { border-left-color: #ffc107; }
+    .stats-card.confirmed { border-left-color: #17a2b8; }
+    .stats-card.preparing { border-left-color: #fd7e14; }
+    .stats-card.ready { border-left-color: #20c997; }
+    .stats-card.delivered { border-left-color: #28a745; }
+    .stats-card.cancelled { border-left-color: #dc3545; }
+
+    /* Table Styles */
+    .table {
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .table th {
+      background-color: #f8f9fa;
+      border-bottom: 2px solid #dee2e6;
+      font-weight: 600;
+    }
+
+    .table td {
+      vertical-align: middle;
+    }
+
+    /* Status Badges */
+    .status-badge {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .status-pending { background-color: #fff3cd; color: #856404; }
+    .status-confirmed { background-color: #d1ecf1; color: #0c5460; }
+    .status-preparing { background-color: #f8d7da; color: #721c24; }
+    .status-ready { background-color: #d4edda; color: #155724; }
+    .status-out-for-delivery { background-color: #cce5ff; color: #004085; }
+    .status-delivered { background-color: #d1ecf1; color: #0c5460; }
+    .status-cancelled { background-color: #f8d7da; color: #721c24; }
+
+    /* Button Styles */
+    .btn {
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    .btn-sm {
+      padding: 4px 8px;
+      font-size: 0.8rem;
+    }
+
+    /* Filter Section */
+    .filter-section {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+<div class="container-fluid">
+  <div class="row">
+    <!-- Sidebar -->
+    <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
+
+    <!-- Main content -->
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+      <div class="main-header">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center">
+          <h1 th:text="${pageTitle}">Quản lý đơn hàng</h1>
+          <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+              <button class="btn btn-outline-primary" onclick="refreshOrders()">
+                <i class="fas fa-sync-alt me-1"></i>
+                Làm mới
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats Cards -->
+      <div class="row mb-4">
+        <div class="col-md-2">
+          <div class="stats-card pending">
+            <div class="d-flex justify-content-between">
+              <div>
+                <h6 class="text-muted mb-1">Chờ xử lý</h6>
+                <h4 class="mb-0" id="pendingCount">0</h4>
+              </div>
+              <div class="align-self-center">
+                <i class="fas fa-clock fa-2x text-warning"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="stats-card confirmed">
+            <div class="d-flex justify-content-between">
+              <div>
+                <h6 class="text-muted mb-1">Đã xác nhận</h6>
+                <h4 class="mb-0" id="confirmedCount">0</h4>
+              </div>
+              <div class="align-self-center">
+                <i class="fas fa-check-circle fa-2x text-info"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="stats-card preparing">
+            <div class="d-flex justify-content-between">
+              <div>
+                <h6 class="text-muted mb-1">Đang chuẩn bị</h6>
+                <h4 class="mb-0" id="preparingCount">0</h4>
+              </div>
+              <div class="align-self-center">
+                <i class="fas fa-utensils fa-2x text-warning"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="stats-card ready">
+            <div class="d-flex justify-content-between">
+              <div>
+                <h6 class="text-muted mb-1">Sẵn sàng</h6>
+                <h4 class="mb-0" id="readyCount">0</h4>
+              </div>
+              <div class="align-self-center">
+                <i class="fas fa-check fa-2x text-success"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="stats-card delivered">
+            <div class="d-flex justify-content-between">
+              <div>
+                <h6 class="text-muted mb-1">Đã giao</h6>
+                <h4 class="mb-0" id="deliveredCount">0</h4>
+              </div>
+              <div class="align-self-center">
+                <i class="fas fa-truck fa-2x text-success"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="stats-card cancelled">
+            <div class="d-flex justify-content-between">
+              <div>
+                <h6 class="text-muted mb-1">Đã hủy</h6>
+                <h4 class="mb-0" id="cancelledCount">0</h4>
+              </div>
+              <div class="align-self-center">
+                <i class="fas fa-times-circle fa-2x text-danger"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter Section -->
+      <div class="filter-section">
+        <div class="row align-items-center">
+          <div class="col-md-3">
+            <label class="form-label">Lọc theo trạng thái:</label>
+            <select class="form-select" id="statusFilter" onchange="filterByStatus()">
+              <option value="">Tất cả</option>
+              <option value="PENDING">Chờ xử lý</option>
+              <option value="CONFIRMED">Đã xác nhận</option>
+              <option value="PREPARING">Đang chuẩn bị</option>
+              <option value="READY">Sẵn sàng</option>
+              <option value="OUT_FOR_DELIVERY">Đang giao</option>
+              <option value="DELIVERED">Đã giao</option>
+              <option value="CANCELLED">Đã hủy</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Tìm kiếm:</label>
+            <input type="text" class="form-control" id="searchInput" placeholder="Mã đơn hàng, tên khách hàng..." onkeyup="searchOrders()">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Từ ngày:</label>
+            <input type="date" class="form-control" id="dateFrom" onchange="filterByDate()">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Đến ngày:</label>
+            <input type="date" class="form-control" id="dateTo" onchange="filterByDate()">
+          </div>
+        </div>
+      </div>
+
+      <!-- Orders Table -->
+      <div class="card">
+        <div class="card-header">
+          <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-list me-2"></i>
+            Danh sách đơn hàng
+            <span class="badge bg-primary ms-2" id="totalOrdersCount">0</span>
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-hover" id="ordersTable">
+              <thead>
+              <tr>
+                <th>Mã đơn hàng</th>
+                <th>Khách hàng</th>
+                <th>Số điện thoại</th>
+                <th>Địa chỉ giao</th>
+                <th>Tổng tiền</th>
+                <th>Trạng thái</th>
+                <th>Ngày tạo</th>
+                <th>Thao tác</th>
+              </tr>
+              </thead>
+              <tbody id="ordersTableBody">
+              <!-- Orders will be loaded here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Order Status Update Modal -->
+<div class="modal fade" id="statusUpdateModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Cập nhật trạng thái đơn hàng</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>Đơn hàng: <strong id="modalOrderNumber"></strong></p>
+        <div class="mb-3">
+          <label class="form-label">Trạng thái mới:</label>
+          <select class="form-select" id="newStatus">
+            <option value="PENDING">Chờ xử lý</option>
+            <option value="CONFIRMED">Đã xác nhận</option>
+            <option value="PREPARING">Đang chuẩn bị</option>
+            <option value="READY">Sẵn sàng</option>
+            <option value="OUT_FOR_DELIVERY">Đang giao</option>
+            <option value="DELIVERED">Đã giao</option>
+            <option value="CANCELLED">Đã hủy</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+        <button type="button" class="btn btn-primary" onclick="updateOrderStatus()">Cập nhật</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  let currentOrderId = null;
+  let allOrders = [];
+
+  // Load orders on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    loadOrders();
+    loadOrderStats();
+  });
+
+  // Load all orders
+  function loadOrders() {
+    fetch('/admin/orders/api/all')
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                allOrders = data.data;
+                displayOrders(allOrders);
+                updateStats();
+              } else {
+                showAlert('Lỗi tải danh sách đơn hàng: ' + data.message, 'danger');
+              }
+            })
+            .catch(error => {
+              console.error('Error:', error);
+              showAlert('Có lỗi xảy ra khi tải đơn hàng', 'danger');
+            });
+  }
+
+  // Load order statistics
+  function loadOrderStats() {
+    fetch('/admin/orders/api/stats')
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                updateStatsCards(data.data);
+              }
+            })
+            .catch(error => {
+              console.error('Error loading stats:', error);
+            });
+  }
+
+  // Display orders in table
+  function displayOrders(orders) {
+    const tbody = document.getElementById('ordersTableBody');
+    tbody.innerHTML = '';
+
+    if (orders.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Không có đơn hàng nào</td></tr>';
+      return;
+    }
+
+    orders.forEach(order => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td><strong>${order.orderNumber}</strong></td>
+        <td>${order.userFullName || 'N/A'}</td>
+        <td>${order.userPhone || 'N/A'}</td>
+        <td>${order.deliveryAddress || 'N/A'}</td>
+        <td><strong>$${order.finalAmount || 0}</strong></td>
+        <td><span class="status-badge status-${order.orderStatus.toLowerCase()}">${getStatusText(order.orderStatus)}</span></td>
+        <td>${formatDate(order.createdAt)}</td>
+        <td>
+          <div class="btn-group" role="group">
+            <a href="/admin/orders/${order.orderId}" class="btn btn-sm btn-outline-info" title="Xem chi tiết">
+              <i class="fas fa-eye"></i>
+            </a>
+            <button class="btn btn-sm btn-outline-warning" title="Cập nhật trạng thái" onclick="openStatusModal(${order.orderId}, '${order.orderNumber}', '${order.orderStatus}')">
+              <i class="fas fa-edit"></i>
+            </button>
+            ${order.canBeCancelled ? `<button class="btn btn-sm btn-outline-danger" title="Hủy đơn hàng" onclick="cancelOrder(${order.orderId})"><i class="fas fa-times"></i></button>` : ''}
+          </div>
+        </td>
+      `;
+      tbody.appendChild(row);
+    });
+
+    document.getElementById('totalOrdersCount').textContent = orders.length;
+  }
+
+  // Update statistics cards
+  function updateStatsCards(stats) {
+    document.getElementById('pendingCount').textContent = stats.pendingOrders || 0;
+    document.getElementById('confirmedCount').textContent = stats.confirmedOrders || 0;
+    document.getElementById('preparingCount').textContent = stats.preparingOrders || 0;
+    document.getElementById('readyCount').textContent = stats.readyOrders || 0;
+    document.getElementById('deliveredCount').textContent = stats.deliveredOrders || 0;
+    document.getElementById('cancelledCount').textContent = stats.cancelledOrders || 0;
+  }
+
+  // Update stats from current orders
+  function updateStats() {
+    const stats = {
+      pendingOrders: allOrders.filter(o => o.orderStatus === 'PENDING').length,
+      confirmedOrders: allOrders.filter(o => o.orderStatus === 'CONFIRMED').length,
+      preparingOrders: allOrders.filter(o => o.orderStatus === 'PREPARING').length,
+      readyOrders: allOrders.filter(o => o.orderStatus === 'READY').length,
+      deliveredOrders: allOrders.filter(o => o.orderStatus === 'DELIVERED').length,
+      cancelledOrders: allOrders.filter(o => o.orderStatus === 'CANCELLED').length
+    };
+    updateStatsCards(stats);
+  }
+
+  // Filter orders by status
+  function filterByStatus() {
+    const status = document.getElementById('statusFilter').value;
+    let filteredOrders = allOrders;
+
+    if (status) {
+      filteredOrders = allOrders.filter(order => order.orderStatus === status);
+    }
+
+    displayOrders(filteredOrders);
+  }
+
+  // Search orders
+  function searchOrders() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    let filteredOrders = allOrders;
+
+    if (searchTerm) {
+      filteredOrders = allOrders.filter(order =>
+              order.orderNumber.toLowerCase().includes(searchTerm) ||
+              (order.userFullName && order.userFullName.toLowerCase().includes(searchTerm)) ||
+              (order.userPhone && order.userPhone.includes(searchTerm))
+      );
+    }
+
+    displayOrders(filteredOrders);
+  }
+
+  // Filter by date
+  function filterByDate() {
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+    let filteredOrders = allOrders;
+
+    if (dateFrom) {
+      filteredOrders = filteredOrders.filter(order => new Date(order.createdAt) >= new Date(dateFrom));
+    }
+
+    if (dateTo) {
+      filteredOrders = filteredOrders.filter(order => new Date(order.createdAt) <= new Date(dateTo + 'T23:59:59'));
+    }
+
+    displayOrders(filteredOrders);
+  }
+
+  // Open status update modal
+  function openStatusModal(orderId, orderNumber, currentStatus) {
+    currentOrderId = orderId;
+    document.getElementById('modalOrderNumber').textContent = orderNumber;
+    document.getElementById('newStatus').value = currentStatus;
+
+    const modal = new bootstrap.Modal(document.getElementById('statusUpdateModal'));
+    modal.show();
+  }
+
+  // Update order status
+  function updateOrderStatus() {
+    const newStatus = document.getElementById('newStatus').value;
+
+    fetch(`/admin/orders/api/${currentOrderId}/status?status=${newStatus}`, {
+      method: 'PUT'
+    })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                showAlert('Cập nhật trạng thái đơn hàng thành công!', 'success');
+                loadOrders();
+                loadOrderStats();
+
+                const modal = bootstrap.Modal.getInstance(document.getElementById('statusUpdateModal'));
+                modal.hide();
+              } else {
+                showAlert('Lỗi cập nhật trạng thái: ' + data.message, 'danger');
+              }
+            })
+            .catch(error => {
+              console.error('Error:', error);
+              showAlert('Có lỗi xảy ra khi cập nhật trạng thái', 'danger');
+            });
+  }
+
+  // Cancel order
+  function cancelOrder(orderId) {
+    if (confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')) {
+      fetch(`/admin/orders/api/${orderId}/cancel`, {
+        method: 'PUT'
+      })
+              .then(response => response.json())
+              .then(data => {
+                if (data.success) {
+                  showAlert('Hủy đơn hàng thành công!', 'success');
+                  loadOrders();
+                  loadOrderStats();
+                } else {
+                  showAlert('Lỗi hủy đơn hàng: ' + data.message, 'danger');
+                }
+              })
+              .catch(error => {
+                console.error('Error:', error);
+                showAlert('Có lỗi xảy ra khi hủy đơn hàng', 'danger');
+              });
+    }
+  }
+
+  // Refresh orders
+  function refreshOrders() {
+    loadOrders();
+    loadOrderStats();
+  }
+
+  // Helper functions
+  function getStatusText(status) {
+    const statusMap = {
+      'PENDING': 'Chờ xử lý',
+      'CONFIRMED': 'Đã xác nhận',
+      'PREPARING': 'Đang chuẩn bị',
+      'READY': 'Sẵn sàng',
+      'OUT_FOR_DELIVERY': 'Đang giao',
+      'DELIVERED': 'Đã giao',
+      'CANCELLED': 'Đã hủy'
+    };
+    return statusMap[status] || status;
+  }
+
+  function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('vi-VN') + ' ' + date.toLocaleTimeString('vi-VN', {hour: '2-digit', minute: '2-digit'});
+  }
+
+  function showAlert(message, type) {
+    const alertContainer = document.createElement('div');
+    alertContainer.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertContainer.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertContainer.innerHTML = `
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    document.body.appendChild(alertContainer);
+
+    setTimeout(() => {
+      if (alertContainer.parentNode) {
+        alertContainer.remove();
+      }
+    }, 5000);
+  }
+</script>
+</body>
+</html>

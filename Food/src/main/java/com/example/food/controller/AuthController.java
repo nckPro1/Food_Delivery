@@ -1,9 +1,11 @@
 package com.example.food.controller;
 
 import com.example.food.dto.*;
+import com.example.food.model.AuthProvider;
 import com.example.food.model.User;
 import com.example.food.repository.UserRepository;
 import com.example.food.security.JwtTokenProvider;
+import com.example.food.service.AccountMergeService;
 import com.example.food.service.AuthService;
 import com.example.food.service.OTPService;
 import com.example.food.service.UserService;
@@ -39,6 +41,9 @@ public class AuthController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private AccountMergeService accountMergeService;
 
     // Store registration data temporarily (in production, use Redis or database)
     private Map<String, RegisterRequest> pendingRegistrations = new HashMap<>();
@@ -146,22 +151,9 @@ public class AuthController {
 
         String email = oauth2User.getAttribute("email");
         String name = oauth2User.getAttribute("name");
-        String picture = oauth2User.getAttribute("picture");
 
-        // Check if user exists
-        User user = userRepository.findByEmail(email).orElse(null);
-
-        if (user == null) {
-            // Create new user from Google account
-            user = new User();
-            user.setEmail(email);
-            user.setFullName(name);
-            // Don't set avatar_url automatically - let user upload their own
-            // user.setAvatarUrl(picture); // Commented out
-            user.setPassword(passwordEncoder.encode("OAUTH2_USER_" + System.currentTimeMillis())); // Random password
-            user.setRoleId(1); // USER role
-            user = userRepository.save(user);
-        }
+        // Handle account merge if email already exists
+        User user = accountMergeService.handleAccountMerge(email, AuthProvider.GOOGLE, name);
 
         // Generate tokens
         String accessToken = jwtTokenProvider.generateToken(user.getEmail());
@@ -219,23 +211,12 @@ public class AuthController {
                 );
             }
 
-            // Check if user exists by email
-            User user = userRepository.findByEmail(email).orElse(null);
-
-            if (user == null) {
-                // Create new user from Google account
-                System.out.println("Creating NEW user for email: " + email);
-                user = new User();
-                user.setEmail(email);
-                user.setFullName("Google User"); // Default name, can extract from token
-                user.setPassword(passwordEncoder.encode("GOOGLE_USER_" + System.currentTimeMillis()));
-                user.setRoleId(1); // USER role
-                user = userRepository.save(user);
-                System.out.println("User created with ID: " + user.getUserId());
-            } else {
-                System.out.println("EXISTING user found with ID: " + user.getUserId());
-                System.out.println("User email: " + user.getEmail());
-            }
+            // Handle account merge if email already exists
+            System.out.println("Handling account merge for email: " + email);
+            User user = accountMergeService.handleAccountMerge(email, AuthProvider.GOOGLE, "Google User");
+            System.out.println("User processed with ID: " + user.getUserId());
+            System.out.println("User email: " + user.getEmail());
+            System.out.println("User auth provider: " + user.getAuthProvider());
 
             // Generate tokens
             System.out.println("Generating JWT tokens...");
@@ -357,8 +338,17 @@ public class AuthController {
     @PostMapping("/reset-password")
     public ResponseEntity<ApiResponse> resetPassword(@RequestBody ResetPasswordRequest request) {
         try {
+            System.out.println("=== RESET PASSWORD REQUEST ===");
+            System.out.println("Email: " + request.getEmail());
+            System.out.println("OTP: " + request.getOtp());
+            System.out.println("OTP Length: " + request.getOtp().length());
+
             // Validate OTP
-            if (!otpService.verifyOTP(request.getEmail(), request.getOtp())) {
+            boolean otpValid = otpService.verifyOTP(request.getEmail(), request.getOtp());
+            System.out.println("OTP Validation Result: " + otpValid);
+
+            if (!otpValid) {
+                System.out.println("❌ OTP validation failed");
                 return ResponseEntity.badRequest().body(
                         ApiResponse.builder()
                                 .success(false)
@@ -366,6 +356,8 @@ public class AuthController {
                                 .build()
                 );
             }
+
+            System.out.println("✓ OTP validation successful");
 
             // Validate new password
             if (request.getNewPassword().length() < 6) {
@@ -423,11 +415,112 @@ public class AuthController {
     }
 
     /**
-     * Test endpoint
+     * Check account status for email
      */
-    @GetMapping("/test")
-    public ResponseEntity<String> test() {
-        return ResponseEntity.ok("✅ Auth API đang hoạt động!");
+    @PostMapping("/check-account")
+    public ResponseEntity<ApiResponse> checkAccount(@RequestBody Map<String, String> request) {
+        try {
+            String email = request.get("email");
+            if (email == null || email.isEmpty()) {
+                return ResponseEntity.badRequest().body(
+                        ApiResponse.builder()
+                                .success(false)
+                                .message("Email không được để trống")
+                                .build()
+                );
+            }
+
+            User user = userRepository.findByEmail(email).orElse(null);
+            if (user == null) {
+                return ResponseEntity.ok(
+                        ApiResponse.builder()
+                                .success(true)
+                                .message("Email chưa được đăng ký")
+                                .data("NOT_REGISTERED")
+                                .build()
+                );
+            }
+
+            String status;
+            String message;
+            switch (user.getAuthProvider()) {
+                case EMAIL:
+                    status = "EMAIL_REGISTERED";
+                    message = "Email đã được đăng ký với phương thức đăng ký thông thường";
+                    break;
+                case GOOGLE:
+                    status = "GOOGLE_REGISTERED";
+                    message = "Email đã được đăng ký với Google";
+                    break;
+                default:
+                    status = "UNKNOWN";
+                    message = "Trạng thái tài khoản không xác định";
+            }
+
+            return ResponseEntity.ok(
+                    ApiResponse.builder()
+                            .success(true)
+                            .message(message)
+                            .data(status)
+                            .build()
+            );
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                    ApiResponse.builder()
+                            .success(false)
+                            .message("Lỗi server: " + e.getMessage())
+                            .build()
+            );
+        }
+    }
+
+    /**
+     * Test endpoint để tạo JWT token cho user cụ thể
+     */
+    @PostMapping("/test-token")
+    public ResponseEntity<AuthResponse> testToken(@RequestBody Map<String, String> request) {
+        try {
+            String email = request.get("email");
+            if (email == null || email.isEmpty()) {
+                email = "test@example.com"; // Default test email
+            }
+
+            // Tìm hoặc tạo user
+            User user = userRepository.findByEmail(email).orElse(null);
+            if (user == null) {
+                user = User.builder()
+                        .email(email)
+                        .fullName("Test User")
+                        .phoneNumber("0123456789")
+                        .address("Test Address")
+                        .password(passwordEncoder.encode("password"))
+                        .authProvider(AuthProvider.EMAIL)
+                        .build();
+                user = userRepository.save(user);
+            }
+
+            // Generate tokens
+            String accessToken = jwtTokenProvider.generateToken(user.getEmail());
+            String refreshToken = authService.createRefreshToken(user);
+
+            return ResponseEntity.ok(AuthResponse.builder()
+                    .success(true)
+                    .message("Test token generated successfully")
+                    .accessToken(accessToken)
+                    .refreshToken(refreshToken)
+                    .tokenType("Bearer")
+                    .user(userService.convertToDTO(user))
+                    .build());
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                    AuthResponse.builder()
+                            .success(false)
+                            .message("Error generating test token: " + e.getMessage())
+                            .build()
+            );
+        }
     }
 
     /**
