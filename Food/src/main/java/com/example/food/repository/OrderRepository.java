@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,4 +32,18 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @Query("SELECT COUNT(o) FROM Order o WHERE o.orderStatus = :status")
     Long countByOrderStatus(@Param("status") Order.OrderStatus status);
+
+    // Dashboard analytics methods
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.createdAt BETWEEN :startDate AND :endDate")
+    Long countByCreatedAtBetween(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+
+    @Query("SELECT o FROM Order o WHERE o.createdAt BETWEEN :startDate AND :endDate AND o.orderStatus = :status")
+    List<Order> findByCreatedAtBetweenAndOrderStatus(@Param("startDate") LocalDateTime startDate, 
+                                                      @Param("endDate") LocalDateTime endDate, 
+                                                      @Param("status") Order.OrderStatus status);
+
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.createdAt BETWEEN :startDate AND :endDate AND o.orderStatus = :status")
+    Long countByCreatedAtBetweenAndOrderStatus(@Param("startDate") LocalDateTime startDate, 
+                                               @Param("endDate") LocalDateTime endDate, 
+                                               @Param("status") Order.OrderStatus status);
 }

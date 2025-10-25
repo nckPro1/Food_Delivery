@@ -80,10 +80,8 @@
 
     .stats-card.pending { border-left-color: #ffc107; }
     .stats-card.confirmed { border-left-color: #17a2b8; }
-    .stats-card.preparing { border-left-color: #fd7e14; }
-    .stats-card.ready { border-left-color: #20c997; }
-    .stats-card.delivered { border-left-color: #28a745; }
-    .stats-card.cancelled { border-left-color: #dc3545; }
+    .stats-card.delivering { border-left-color: #fd7e14; }
+    .stats-card.done { border-left-color: #28a745; }
 
     /* Table Styles */
     .table {
@@ -113,11 +111,8 @@
 
     .status-pending { background-color: #fff3cd; color: #856404; }
     .status-confirmed { background-color: #d1ecf1; color: #0c5460; }
-    .status-preparing { background-color: #f8d7da; color: #721c24; }
-    .status-ready { background-color: #d4edda; color: #155724; }
-    .status-out-for-delivery { background-color: #cce5ff; color: #004085; }
-    .status-delivered { background-color: #d1ecf1; color: #0c5460; }
-    .status-cancelled { background-color: #f8d7da; color: #721c24; }
+    .status-delivering { background-color: #cce5ff; color: #004085; }
+    .status-done { background-color: #d4edda; color: #155724; }
 
     /* Button Styles */
     .btn {
@@ -139,6 +134,24 @@
       padding: 20px;
       margin-bottom: 20px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    /* Pagination Styles */
+    .pagination .page-link {
+      border-radius: 8px;
+      margin: 0 2px;
+      border: 1px solid #dee2e6;
+    }
+
+    .pagination .page-item.active .page-link {
+      background-color: #007bff;
+      border-color: #007bff;
+    }
+
+    /* Date Header */
+    .table-light td {
+      background-color: #f8f9fa !important;
+      border-top: 2px solid #dee2e6;
     }
   </style>
 </head>
@@ -166,7 +179,7 @@
 
       <!-- Stats Cards -->
       <div class="row mb-4">
-        <div class="col-md-2">
+        <div class="col-md-3">
           <div class="stats-card pending">
             <div class="d-flex justify-content-between">
               <div>
@@ -179,7 +192,7 @@
             </div>
           </div>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-3">
           <div class="stats-card confirmed">
             <div class="d-flex justify-content-between">
               <div>
@@ -192,54 +205,28 @@
             </div>
           </div>
         </div>
-        <div class="col-md-2">
-          <div class="stats-card preparing">
+        <div class="col-md-3">
+          <div class="stats-card delivering">
             <div class="d-flex justify-content-between">
               <div>
-                <h6 class="text-muted mb-1">Đang chuẩn bị</h6>
-                <h4 class="mb-0" id="preparingCount">0</h4>
+                <h6 class="text-muted mb-1">Đang giao</h6>
+                <h4 class="mb-0" id="deliveringCount">0</h4>
               </div>
               <div class="align-self-center">
-                <i class="fas fa-utensils fa-2x text-warning"></i>
+                <i class="fas fa-truck fa-2x text-warning"></i>
               </div>
             </div>
           </div>
         </div>
-        <div class="col-md-2">
-          <div class="stats-card ready">
+        <div class="col-md-3">
+          <div class="stats-card done">
             <div class="d-flex justify-content-between">
               <div>
-                <h6 class="text-muted mb-1">Sẵn sàng</h6>
-                <h4 class="mb-0" id="readyCount">0</h4>
+                <h6 class="text-muted mb-1">Hoàn thành</h6>
+                <h4 class="mb-0" id="doneCount">0</h4>
               </div>
               <div class="align-self-center">
-                <i class="fas fa-check fa-2x text-success"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-2">
-          <div class="stats-card delivered">
-            <div class="d-flex justify-content-between">
-              <div>
-                <h6 class="text-muted mb-1">Đã giao</h6>
-                <h4 class="mb-0" id="deliveredCount">0</h4>
-              </div>
-              <div class="align-self-center">
-                <i class="fas fa-truck fa-2x text-success"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-2">
-          <div class="stats-card cancelled">
-            <div class="d-flex justify-content-between">
-              <div>
-                <h6 class="text-muted mb-1">Đã hủy</h6>
-                <h4 class="mb-0" id="cancelledCount">0</h4>
-              </div>
-              <div class="align-self-center">
-                <i class="fas fa-times-circle fa-2x text-danger"></i>
+                <i class="fas fa-check-circle fa-2x text-success"></i>
               </div>
             </div>
           </div>
@@ -255,11 +242,8 @@
               <option value="">Tất cả</option>
               <option value="PENDING">Chờ xử lý</option>
               <option value="CONFIRMED">Đã xác nhận</option>
-              <option value="PREPARING">Đang chuẩn bị</option>
-              <option value="READY">Sẵn sàng</option>
-              <option value="OUT_FOR_DELIVERY">Đang giao</option>
-              <option value="DELIVERED">Đã giao</option>
-              <option value="CANCELLED">Đã hủy</option>
+              <option value="DELIVERING">Đang giao</option>
+              <option value="DONE">Hoàn thành</option>
             </select>
           </div>
           <div class="col-md-3">
@@ -280,13 +264,48 @@
       <!-- Orders Table -->
       <div class="card">
         <div class="card-header">
-          <h6 class="m-0 font-weight-bold text-primary">
-            <i class="fas fa-list me-2"></i>
-            Danh sách đơn hàng
-            <span class="badge bg-primary ms-2" id="totalOrdersCount">0</span>
-          </h6>
+          <div class="d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">
+              <i class="fas fa-list me-2"></i>
+              Danh sách đơn hàng
+              <span class="badge bg-primary ms-2" id="totalOrdersCount">0</span>
+            </h6>
+            <div class="d-flex align-items-center">
+              <span class="text-muted me-3">Hiển thị:</span>
+              <select class="form-select form-select-sm" id="pageSize" style="width: auto;" onchange="changePageSize()">
+                <option value="10" selected>10 đơn/trang</option>
+                <option value="20">20 đơn/trang</option>
+                <option value="50">50 đơn/trang</option>
+                <option value="100">100 đơn/trang</option>
+              </select>
+            </div>
+          </div>
         </div>
         <div class="card-body">
+          <!-- Pagination Info -->
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="text-muted">
+              Hiển thị <span id="showingFrom">0</span> - <span id="showingTo">0</span> trong tổng số <span id="totalCount">0</span> đơn hàng
+            </div>
+            <div class="d-flex align-items-center">
+              <button class="btn btn-outline-secondary btn-sm me-2" onclick="goToFirstPage()" id="firstPageBtn" disabled>
+                <i class="fas fa-angle-double-left"></i>
+              </button>
+              <button class="btn btn-outline-secondary btn-sm me-2" onclick="goToPreviousPage()" id="prevPageBtn" disabled>
+                <i class="fas fa-angle-left"></i>
+              </button>
+              <span class="mx-3">
+                Trang <span id="currentPage">1</span> / <span id="totalPages">1</span>
+              </span>
+              <button class="btn btn-outline-secondary btn-sm me-2" onclick="goToNextPage()" id="nextPageBtn" disabled>
+                <i class="fas fa-angle-right"></i>
+              </button>
+              <button class="btn btn-outline-secondary btn-sm" onclick="goToLastPage()" id="lastPageBtn" disabled>
+                <i class="fas fa-angle-double-right"></i>
+              </button>
+            </div>
+          </div>
+
           <div class="table-responsive">
             <table class="table table-hover" id="ordersTable">
               <thead>
@@ -305,6 +324,15 @@
               <!-- Orders will be loaded here -->
               </tbody>
             </table>
+          </div>
+
+          <!-- Pagination Controls -->
+          <div class="d-flex justify-content-center mt-3">
+            <nav aria-label="Orders pagination">
+              <ul class="pagination" id="paginationControls">
+                <!-- Pagination buttons will be generated here -->
+              </ul>
+            </nav>
           </div>
         </div>
       </div>
@@ -327,11 +355,8 @@
           <select class="form-select" id="newStatus">
             <option value="PENDING">Chờ xử lý</option>
             <option value="CONFIRMED">Đã xác nhận</option>
-            <option value="PREPARING">Đang chuẩn bị</option>
-            <option value="READY">Sẵn sàng</option>
-            <option value="OUT_FOR_DELIVERY">Đang giao</option>
-            <option value="DELIVERED">Đã giao</option>
-            <option value="CANCELLED">Đã hủy</option>
+            <option value="DELIVERING">Đang giao</option>
+            <option value="DONE">Hoàn thành</option>
           </select>
         </div>
       </div>
@@ -347,6 +372,10 @@
 <script>
   let currentOrderId = null;
   let allOrders = [];
+  let currentPage = 1;
+  let pageSize = 10;
+  let totalPages = 1;
+  let filteredOrders = [];
 
   // Load orders on page load
   document.addEventListener('DOMContentLoaded', function() {
@@ -361,7 +390,9 @@
             .then(data => {
               if (data.success) {
                 allOrders = data.data;
-                displayOrders(allOrders);
+                filteredOrders = [...allOrders];
+                currentPage = 1;
+                displayOrders(filteredOrders);
                 updateStats();
               } else {
                 showAlert('Lỗi tải danh sách đơn hàng: ' + data.message, 'danger');
@@ -387,52 +418,212 @@
             });
   }
 
-  // Display orders in table
+  // Group orders by date
+  function groupOrdersByDate(orders) {
+    const grouped = {};
+    orders.forEach(order => {
+      const date = new Date(order.createdAt).toDateString();
+      if (!grouped[date]) {
+        grouped[date] = [];
+      }
+      grouped[date].push(order);
+    });
+    return grouped;
+  }
+
+  // Format date header
+  function formatDateHeader(dateString) {
+    const date = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    if (date.toDateString() === today.toDateString()) {
+      return 'Hôm nay';
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return 'Hôm qua';
+    } else {
+      return date.toLocaleDateString('vi-VN', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    }
+  }
+
+  // Display orders in table with pagination
   function displayOrders(orders) {
     const tbody = document.getElementById('ordersTableBody');
     tbody.innerHTML = '';
 
     if (orders.length === 0) {
       tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Không có đơn hàng nào</td></tr>';
+      updatePaginationInfo(0, 0, 0);
       return;
     }
 
-    orders.forEach(order => {
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td><strong>${order.orderNumber}</strong></td>
-        <td>${order.userFullName || 'N/A'}</td>
-        <td>${order.userPhone || 'N/A'}</td>
-        <td>${order.deliveryAddress || 'N/A'}</td>
-        <td><strong>$${order.finalAmount || 0}</strong></td>
-        <td><span class="status-badge status-${order.orderStatus.toLowerCase()}">${getStatusText(order.orderStatus)}</span></td>
-        <td>${formatDate(order.createdAt)}</td>
-        <td>
-          <div class="btn-group" role="group">
-            <a href="/admin/orders/${order.orderId}" class="btn btn-sm btn-outline-info" title="Xem chi tiết">
-              <i class="fas fa-eye"></i>
-            </a>
-            <button class="btn btn-sm btn-outline-warning" title="Cập nhật trạng thái" onclick="openStatusModal(${order.orderId}, '${order.orderNumber}', '${order.orderStatus}')">
-              <i class="fas fa-edit"></i>
-            </button>
-            ${order.canBeCancelled ? `<button class="btn btn-sm btn-outline-danger" title="Hủy đơn hàng" onclick="cancelOrder(${order.orderId})"><i class="fas fa-times"></i></button>` : ''}
-          </div>
+    // Calculate pagination
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = Math.min(startIndex + pageSize, orders.length);
+    const pageOrders = orders.slice(startIndex, endIndex);
+    
+    // Group page orders by date
+    const pageOrdersByDate = groupOrdersByDate(pageOrders);
+
+    // Display orders grouped by date
+    Object.keys(pageOrdersByDate).sort((a, b) => new Date(b) - new Date(a)).forEach(date => {
+      const dateOrders = pageOrdersByDate[date];
+      
+      // Add date header
+      const dateRow = document.createElement('tr');
+      dateRow.className = 'table-light';
+      dateRow.innerHTML = `
+        <td colspan="8" class="fw-bold text-primary py-3">
+          <i class="fas fa-calendar-day me-2"></i>
+          ${formatDateHeader(date)} (${dateOrders.length} đơn hàng)
         </td>
       `;
-      tbody.appendChild(row);
+      tbody.appendChild(dateRow);
+      
+      // Add orders for this date
+      dateOrders.forEach(order => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><strong>${order.orderNumber}</strong></td>
+          <td>${order.userFullName || 'N/A'}</td>
+          <td>${order.userPhone || 'N/A'}</td>
+          <td>${order.deliveryAddress || 'N/A'}</td>
+          <td><strong>$${order.finalAmount || 0}</strong></td>
+          <td><span class="status-badge status-${order.orderStatus.toLowerCase()}">${getStatusText(order.orderStatus)}</span></td>
+          <td>${formatDate(order.createdAt)}</td>
+          <td>
+            <div class="btn-group" role="group">
+              <a href="/admin/orders/${order.orderId}" class="btn btn-sm btn-outline-info" title="Xem chi tiết">
+                <i class="fas fa-eye"></i>
+              </a>
+              <button class="btn btn-sm btn-outline-warning" title="Cập nhật trạng thái" onclick="openStatusModal(${order.orderId}, '${order.orderNumber}', '${order.orderStatus}')">
+                <i class="fas fa-edit"></i>
+              </button>
+              ${order.canBeCancelled ? `<button class="btn btn-sm btn-outline-danger" title="Hủy đơn hàng" onclick="cancelOrder(${order.orderId})"><i class="fas fa-times"></i></button>` : ''}
+            </div>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
     });
 
-    document.getElementById('totalOrdersCount').textContent = orders.length;
+    updatePaginationInfo(orders.length, startIndex + 1, endIndex);
+    updatePaginationControls(orders.length);
+  }
+
+  // Update pagination info
+  function updatePaginationInfo(total, from, to) {
+    document.getElementById('totalCount').textContent = total;
+    document.getElementById('showingFrom').textContent = from;
+    document.getElementById('showingTo').textContent = to;
+    document.getElementById('totalOrdersCount').textContent = total;
+  }
+
+  // Update pagination controls
+  function updatePaginationControls(totalOrders) {
+    totalPages = Math.ceil(totalOrders / pageSize);
+    
+    document.getElementById('currentPage').textContent = currentPage;
+    document.getElementById('totalPages').textContent = totalPages;
+    
+    // Update button states
+    document.getElementById('firstPageBtn').disabled = currentPage === 1;
+    document.getElementById('prevPageBtn').disabled = currentPage === 1;
+    document.getElementById('nextPageBtn').disabled = currentPage === totalPages;
+    document.getElementById('lastPageBtn').disabled = currentPage === totalPages;
+    
+    // Generate pagination buttons
+    generatePaginationButtons();
+  }
+
+  // Generate pagination buttons
+  function generatePaginationButtons() {
+    const container = document.getElementById('paginationControls');
+    container.innerHTML = '';
+    
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+    
+    // Previous button
+    if (startPage > 1) {
+      const prevBtn = createPaginationButton('...', startPage - 1, false);
+      container.appendChild(prevBtn);
+    }
+    
+    // Page buttons
+    for (let i = startPage; i <= endPage; i++) {
+      const btn = createPaginationButton(i.toString(), i, i === currentPage);
+      container.appendChild(btn);
+    }
+    
+    // Next button
+    if (endPage < totalPages) {
+      const nextBtn = createPaginationButton('...', endPage + 1, false);
+      container.appendChild(nextBtn);
+    }
+  }
+
+  // Create pagination button
+  function createPaginationButton(text, page, isActive) {
+    const li = document.createElement('li');
+    li.className = `page-item ${isActive ? 'active' : ''}`;
+    
+    const button = document.createElement('button');
+    button.className = 'page-link';
+    button.textContent = text;
+    button.onclick = () => goToPage(page);
+    
+    li.appendChild(button);
+    return li;
+  }
+
+  // Pagination functions
+  function goToPage(page) {
+    if (page >= 1 && page <= totalPages) {
+      currentPage = page;
+      displayOrders(filteredOrders);
+    }
+  }
+
+  function goToFirstPage() {
+    goToPage(1);
+  }
+
+  function goToPreviousPage() {
+    goToPage(currentPage - 1);
+  }
+
+  function goToNextPage() {
+    goToPage(currentPage + 1);
+  }
+
+  function goToLastPage() {
+    goToPage(totalPages);
+  }
+
+  function changePageSize() {
+    pageSize = parseInt(document.getElementById('pageSize').value);
+    currentPage = 1;
+    displayOrders(filteredOrders);
   }
 
   // Update statistics cards
   function updateStatsCards(stats) {
     document.getElementById('pendingCount').textContent = stats.pendingOrders || 0;
     document.getElementById('confirmedCount').textContent = stats.confirmedOrders || 0;
-    document.getElementById('preparingCount').textContent = stats.preparingOrders || 0;
-    document.getElementById('readyCount').textContent = stats.readyOrders || 0;
-    document.getElementById('deliveredCount').textContent = stats.deliveredOrders || 0;
-    document.getElementById('cancelledCount').textContent = stats.cancelledOrders || 0;
+    document.getElementById('deliveringCount').textContent = stats.deliveringOrders || 0;
+    document.getElementById('doneCount').textContent = stats.doneOrders || 0;
   }
 
   // Update stats from current orders
@@ -440,10 +631,8 @@
     const stats = {
       pendingOrders: allOrders.filter(o => o.orderStatus === 'PENDING').length,
       confirmedOrders: allOrders.filter(o => o.orderStatus === 'CONFIRMED').length,
-      preparingOrders: allOrders.filter(o => o.orderStatus === 'PREPARING').length,
-      readyOrders: allOrders.filter(o => o.orderStatus === 'READY').length,
-      deliveredOrders: allOrders.filter(o => o.orderStatus === 'DELIVERED').length,
-      cancelledOrders: allOrders.filter(o => o.orderStatus === 'CANCELLED').length
+      deliveringOrders: allOrders.filter(o => o.orderStatus === 'DELIVERING').length,
+      doneOrders: allOrders.filter(o => o.orderStatus === 'DONE').length
     };
     updateStatsCards(stats);
   }
@@ -451,28 +640,32 @@
   // Filter orders by status
   function filterByStatus() {
     const status = document.getElementById('statusFilter').value;
-    let filteredOrders = allOrders;
+    let filtered = allOrders;
 
     if (status) {
-      filteredOrders = allOrders.filter(order => order.orderStatus === status);
+      filtered = allOrders.filter(order => order.orderStatus === status);
     }
 
+    filteredOrders = filtered;
+    currentPage = 1;
     displayOrders(filteredOrders);
   }
 
   // Search orders
   function searchOrders() {
     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    let filteredOrders = allOrders;
+    let filtered = allOrders;
 
     if (searchTerm) {
-      filteredOrders = allOrders.filter(order =>
+      filtered = allOrders.filter(order =>
               order.orderNumber.toLowerCase().includes(searchTerm) ||
               (order.userFullName && order.userFullName.toLowerCase().includes(searchTerm)) ||
               (order.userPhone && order.userPhone.includes(searchTerm))
       );
     }
 
+    filteredOrders = filtered;
+    currentPage = 1;
     displayOrders(filteredOrders);
   }
 
@@ -480,16 +673,18 @@
   function filterByDate() {
     const dateFrom = document.getElementById('dateFrom').value;
     const dateTo = document.getElementById('dateTo').value;
-    let filteredOrders = allOrders;
+    let filtered = allOrders;
 
     if (dateFrom) {
-      filteredOrders = filteredOrders.filter(order => new Date(order.createdAt) >= new Date(dateFrom));
+      filtered = filtered.filter(order => new Date(order.createdAt) >= new Date(dateFrom));
     }
 
     if (dateTo) {
-      filteredOrders = filteredOrders.filter(order => new Date(order.createdAt) <= new Date(dateTo + 'T23:59:59'));
+      filtered = filtered.filter(order => new Date(order.createdAt) <= new Date(dateTo + 'T23:59:59'));
     }
 
+    filteredOrders = filtered;
+    currentPage = 1;
     displayOrders(filteredOrders);
   }
 
@@ -563,11 +758,8 @@
     const statusMap = {
       'PENDING': 'Chờ xử lý',
       'CONFIRMED': 'Đã xác nhận',
-      'PREPARING': 'Đang chuẩn bị',
-      'READY': 'Sẵn sàng',
-      'OUT_FOR_DELIVERY': 'Đang giao',
-      'DELIVERED': 'Đã giao',
-      'CANCELLED': 'Đã hủy'
+      'DELIVERING': 'Đang giao',
+      'DONE': 'Hoàn thành'
     };
     return statusMap[status] || status;
   }

@@ -59,19 +59,19 @@ public class OTPService {
         System.out.println("=== OTP VERIFICATION ===");
         System.out.println("Email: " + email);
         System.out.println("OTP Code: " + otpCode);
-
+        
         Optional<OTP> otpOpt = otpRepository.findByEmailAndOtpCodeAndVerifiedFalse(email, otpCode);
-
+        
         if (otpOpt.isEmpty()) {
             System.out.println("❌ OTP not found in database");
             return false;
         }
-
+        
         OTP otp = otpOpt.get();
         System.out.println("✓ OTP found in database");
         System.out.println("OTP expiry time: " + otp.getExpiryTime());
         System.out.println("Current time: " + LocalDateTime.now());
-
+        
         // Check if OTP is expired
         if (LocalDateTime.now().isAfter(otp.getExpiryTime())) {
             System.out.println("❌ OTP has expired");
@@ -79,13 +79,13 @@ public class OTPService {
             otpRepository.delete(otp);
             return false;
         }
-
+        
         System.out.println("✓ OTP is valid and not expired");
-
+        
         // Mark OTP as verified
         otp.setVerified(true);
         otpRepository.save(otp);
-
+        
         System.out.println("✓ OTP marked as verified");
         return true;
     }

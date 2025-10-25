@@ -30,4 +30,10 @@ public interface ShippingFeeRepository extends JpaRepository<ShippingFee, Long> 
            "(:orderAmount <= sf.maxOrderAmount OR sf.maxOrderAmount IS NULL) " +
            "ORDER BY sf.isDefault DESC, sf.minOrderAmount ASC LIMIT 1")
     Optional<ShippingFee> findBestApplicableShippingFee(@Param("orderAmount") BigDecimal orderAmount);
+    
+    @Query("SELECT sf FROM ShippingFee sf WHERE sf.isActive = true AND sf.feeType = 'ORDER_BASED' AND " +
+           "(:orderAmount >= sf.minOrderAmount OR sf.minOrderAmount IS NULL) AND " +
+           "(:orderAmount <= sf.maxOrderAmount OR sf.maxOrderAmount IS NULL) " +
+           "ORDER BY sf.minOrderAmount ASC LIMIT 1")
+    Optional<ShippingFee> findBestApplicableOrderBasedFee(@Param("orderAmount") BigDecimal orderAmount);
 }

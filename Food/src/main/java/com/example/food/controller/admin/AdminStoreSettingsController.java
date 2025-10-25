@@ -31,12 +31,13 @@ public class AdminStoreSettingsController {
             StoreSettingsDTO settings = storeSettingsService.getActiveStoreSettings()
                     .orElse(new StoreSettingsDTO());
             
-            model.addAttribute("settings", settings);
+            model.addAttribute("storeSettings", settings);
             model.addAttribute("pageTitle", "Cài đặt nhà hàng");
             return "admin/store-settings/form";
         } catch (Exception e) {
             log.error("Error loading store settings page: ", e);
             model.addAttribute("error", "Lỗi tải cài đặt nhà hàng: " + e.getMessage());
+            model.addAttribute("storeSettings", new StoreSettingsDTO());
             return "admin/store-settings/form";
         }
     }

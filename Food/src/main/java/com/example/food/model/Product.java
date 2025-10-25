@@ -57,6 +57,23 @@ public class Product {
     @Builder.Default
     private Integer preparationTime = 15; // Phút
 
+    // Sale fields
+    @Column(name = "sale_price", precision = 10, scale = 2)
+    private BigDecimal salePrice;
+
+    @Column(name = "sale_percentage")
+    private Integer salePercentage;
+
+    @Column(name = "is_on_sale", nullable = false)
+    @Builder.Default
+    private Boolean isOnSale = false;
+
+    @Column(name = "sale_start_date")
+    private LocalDateTime saleStartDate;
+
+    @Column(name = "sale_end_date")
+    private LocalDateTime saleEndDate;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     @ToString.Exclude
@@ -101,5 +118,43 @@ public class Product {
             allImages.add(0, imageUrl); // Add main image at the beginning
         }
         return allImages;
+    }
+
+    // Sale helper methods
+    public BigDecimal getCurrentPrice() {
+        if (isOnSale() && isSaleActive()) {
+            if (salePrice != null) {
+                return salePrice;
+            } else if (salePercentage != null) {
+                return price.multiply(BigDecimal.valueOf(100 - salePercentage)).divide(BigDecimal.valueOf(100));
+            }
+        }
+        return price;
+    }
+
+    public boolean isSaleActive() {
+        if (!isOnSale()) return false;
+        LocalDateTime now = LocalDateTime.now();
+        return (saleStartDate == null || now.isAfter(saleStartDate)) && 
+               (saleEndDate == null || now.isBefore(saleEndDate));
+    }
+
+    public BigDecimal getDiscountAmount() {
+        if (isOnSale() && isSaleActive()) {
+            return price.subtract(getCurrentPrice());
+        }
+        return BigDecimal.ZERO;
+    }
+
+    public Integer getDiscountPercentage() {
+        if (isOnSale() && isSaleActive()) {
+            if (salePercentage != null) {
+                return salePercentage;
+            } else if (salePrice != null) {
+                BigDecimal discount = getDiscountAmount();
+                return discount.multiply(BigDecimal.valueOf(100)).divide(price).intValue();
+            }
+        }
+        return 0;
     }
 }

@@ -28,11 +28,11 @@ public class ShippingFeeService {
             return BigDecimal.ZERO;
         }
 
-        // Tìm shipping fee phù hợp nhất
-        Optional<ShippingFee> bestFee = shippingFeeRepository.findBestApplicableShippingFee(orderAmount);
+        // Tìm shipping fee theo giá đơn hàng phù hợp nhất
+        Optional<ShippingFee> orderBasedFee = shippingFeeRepository.findBestApplicableOrderBasedFee(orderAmount);
         
-        if (bestFee.isPresent()) {
-            return bestFee.get().calculateShippingFee(orderAmount);
+        if (orderBasedFee.isPresent()) {
+            return orderBasedFee.get().calculateShippingFee(orderAmount);
         }
 
         // Fallback: tìm default shipping fee
@@ -117,7 +117,7 @@ public class ShippingFeeService {
         existing.setMinOrderAmount(shippingFeeDTO.getMinOrderAmount());
         existing.setMaxOrderAmount(shippingFeeDTO.getMaxOrderAmount());
         existing.setFreeShippingThreshold(shippingFeeDTO.getFreeShippingThreshold());
-        existing.setPerKmFee(shippingFeeDTO.getPerKmFee());
+        existing.setFeeType(shippingFeeDTO.getFeeType());
         existing.setIsDefault(shippingFeeDTO.getIsDefault());
         existing.setIsActive(shippingFeeDTO.getIsActive());
         existing.setDescription(shippingFeeDTO.getDescription());
@@ -167,7 +167,7 @@ public class ShippingFeeService {
                 .minOrderAmount(shippingFee.getMinOrderAmount())
                 .maxOrderAmount(shippingFee.getMaxOrderAmount())
                 .freeShippingThreshold(shippingFee.getFreeShippingThreshold())
-                .perKmFee(shippingFee.getPerKmFee())
+                .feeType(shippingFee.getFeeType())
                 .isDefault(shippingFee.getIsDefault())
                 .isActive(shippingFee.getIsActive())
                 .description(shippingFee.getDescription())
@@ -186,7 +186,7 @@ public class ShippingFeeService {
                 .minOrderAmount(shippingFeeDTO.getMinOrderAmount())
                 .maxOrderAmount(shippingFeeDTO.getMaxOrderAmount())
                 .freeShippingThreshold(shippingFeeDTO.getFreeShippingThreshold())
-                .perKmFee(shippingFeeDTO.getPerKmFee())
+                .feeType(shippingFeeDTO.getFeeType())
                 .isDefault(shippingFeeDTO.getIsDefault())
                 .isActive(shippingFeeDTO.getIsActive())
                 .description(shippingFeeDTO.getDescription())

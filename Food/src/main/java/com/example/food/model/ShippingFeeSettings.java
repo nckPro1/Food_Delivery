@@ -50,3 +50,4 @@ public class ShippingFeeSettings {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 }
+

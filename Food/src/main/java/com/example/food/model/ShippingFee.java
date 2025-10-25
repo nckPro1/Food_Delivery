@@ -39,9 +39,9 @@ public class ShippingFee {
     @Column(name = "free_shipping_threshold", precision = 10, scale = 2)
     private BigDecimal freeShippingThreshold = BigDecimal.valueOf(200000.00);
 
-    @Column(name = "per_km_fee", precision = 10, scale = 2)
-    @Builder.Default
-    private BigDecimal perKmFee = BigDecimal.valueOf(2000.00);
+    @Column(name = "fee_type", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private FeeType feeType = FeeType.ORDER_BASED;
 
     @Column(name = "is_default", nullable = false)
     private Boolean isDefault = false;

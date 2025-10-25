@@ -53,6 +53,9 @@ public class Order {
     @Column(name = "discount_amount", precision = 10, scale = 2)
     private BigDecimal discountAmount = BigDecimal.ZERO;
 
+    @Column(name = "coupon_discount", precision = 10, scale = 2)
+    private BigDecimal couponDiscount = BigDecimal.ZERO;
+
     @Column(name = "final_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal finalAmount;
 
@@ -61,18 +64,6 @@ public class Order {
 
     @Column(name = "delivery_notes", columnDefinition = "TEXT")
     private String deliveryNotes;
-
-    @Column(name = "delivery_city")
-    private String deliveryCity;
-
-    @Column(name = "delivery_district")
-    private String deliveryDistrict;
-
-    @Column(name = "delivery_ward")
-    private String deliveryWard;
-
-    @Column(name = "delivery_street")
-    private String deliveryStreet;
 
     @Column(name = "estimated_delivery_time")
     private LocalDateTime estimatedDeliveryTime;
@@ -109,7 +100,7 @@ public class Order {
         PENDING,        // Chờ xử lý
         CONFIRMED,      // Đã nhận
         DELIVERING,     // Đang giao
-        DONE            // Hoàn thành (thay vì COMPLETED)
+        DONE            // Hoàn thành
     }
 
     public enum PaymentStatus {

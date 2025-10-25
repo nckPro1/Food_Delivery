@@ -22,3 +22,4 @@ public class ShippingFeeSettingsDTO {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
+
