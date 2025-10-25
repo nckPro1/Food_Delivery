@@ -11,3 +11,4 @@ public interface ShippingFeeSettingsRepository extends JpaRepository<ShippingFee
     
     Optional<ShippingFeeSettings> findFirstByOrderByCreatedAtDesc();
 }
+

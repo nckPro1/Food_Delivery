@@ -6,6 +6,7 @@
     <title th:text="${pageTitle}">Admin Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* Global Styles */
         body {
@@ -51,80 +52,148 @@
         }
 
         .sidebar .nav-link i {
+            margin-right: 12px;
             width: 20px;
             text-align: center;
         }
 
-        /* Header Styles */
-        .main-header {
-            background: white;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            border-bottom: 1px solid #e9ecef;
-            padding: 15px 0;
-            margin-left: 0;
-        }
-
-        .main-header h1 {
-            color: #2c3e50;
-            font-weight: 600;
-            margin: 0;
-        }
-
-        .main-header .btn-outline-danger {
-            border-radius: 8px;
-            padding: 8px 16px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .main-header .btn-outline-danger:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
-        }
-
         /* Main Content */
         .main-content {
-            margin-left: 0;
-            padding-top: 20px;
+            margin-left: 250px;
+            padding: 20px;
+            min-height: 100vh;
         }
 
-        /* Statistics Cards */
-        .card-stat {
+        /* Card Styles */
+        .card {
             border: none;
             border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
-            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
-        .card-stat:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
         }
 
-        .stat-icon {
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            border: none;
+            padding: 20px;
+        }
+
+        .card-body {
+            padding: 25px;
+        }
+
+        /* Stats Cards */
+        .stats-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stats-icon {
             width: 60px;
             height: 60px;
-            border-radius: 50%;
+            border-radius: 15px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 24px;
             color: white;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            margin-bottom: 15px;
         }
 
-        .bg-primary-gradient { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .bg-success-gradient { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
-        .bg-warning-gradient { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-        .bg-info-gradient { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .stats-icon.users { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .stats-icon.products { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .stats-icon.orders { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .stats-icon.revenue { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+
+        .stats-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .stats-label {
+            color: #7f8c8d;
+            font-weight: 500;
+        }
+
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 20px 0;
+        }
+
+        /* Period Selector */
+        .period-selector {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .period-btn {
+            border: 2px solid #e9ecef;
+            background: white;
+            color: #495057;
+            padding: 10px 20px;
+            border-radius: 10px;
+            margin-right: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .period-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        .period-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .period-btn.active:hover {
+            color: white;
+        }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner-border {
+            color: #667eea;
+        }
 
         /* Responsive */
         @media (max-width: 768px) {
             .sidebar {
-                position: relative;
-                min-height: auto;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
             }
+            
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            
             .main-content {
                 margin-left: 0;
             }
@@ -132,218 +201,369 @@
     </style>
 </head>
 <body>
-<div class="container-fluid">
-    <div class="row">
-        <!-- Sidebar -->
-        <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar">
+                <div class="position-sticky pt-3">
+                    <!-- Logo/Brand -->
+                    <div class="text-center mb-4 px-3">
+                        <h4 class="text-white mb-0">
+                            <i class="fas fa-utensils me-2"></i>
+                            Food Admin
+                        </h4>
+                        <small class="text-white-50">Management Panel</small>
+                    </div>
 
-        <!-- Main content -->
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
-            <!-- Header -->
-            <div class="main-header">
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center">
-                    <h1 th:text="${pageTitle}">Dashboard</h1>
-                    <div class="btn-toolbar mb-2 mb-md-0">
-                        <div class="btn-group me-2">
-                            <a href="/admin/auth/logout" class="btn btn-sm btn-outline-danger">
-                                <i class="fas fa-sign-out-alt me-1"></i>
+                    <!-- Navigation Menu -->
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/admin/dashboard">
+                                <i class="fas fa-chart-bar"></i>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/products">
+                                <i class="fas fa-pizza-slice"></i>
+                                Sản phẩm
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/categories">
+                                <i class="fas fa-folder"></i>
+                                Danh mục
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/users">
+                                <i class="fas fa-users"></i>
+                                Người dùng
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/orders">
+                                <i class="fas fa-clipboard-list"></i>
+                                Đơn hàng
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/shipping-fees/list">
+                                <i class="fas fa-shipping-fast"></i>
+                                Phí ship
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/store-settings">
+                                <i class="fas fa-store"></i>
+                                Cài đặt nhà hàng
+                            </a>
+                        </li>
+
+                        <!-- Divider -->
+                        <hr class="my-3" style="border-color: rgba(255,255,255,0.2);">
+
+                        <!-- Logout -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/auth/logout">
+                                <i class="fas fa-sign-out-alt"></i>
                                 Đăng xuất
                             </a>
-                        </div>
-                    </div>
+                        </li>
+                    </ul>
                 </div>
-            </div>
+            </nav>
 
-            <!-- Error Alert -->
-            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                <span th:text="${error}"></span>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-
-            <!-- Statistics Cards -->
-            <div class="row mb-4">
-                <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card card-stat h-100">
-                        <div class="card-body">
-                            <div class="row no-gutters align-items-center">
-                                <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                        Tổng người dùng
-                                    </div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${totalUsers}">0</div>
-                                </div>
-                                <div class="col-auto">
-                                    <div class="stat-icon bg-primary-gradient">
-                                        <i class="fas fa-users"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 main-content">
+                <!-- Page Header -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1 class="text-primary">Dashboard</h1>
+                    <div class="text-muted">
+                        <i class="fas fa-calendar-alt me-2"></i>
+                        <span id="currentDate"></span>
                     </div>
                 </div>
 
-                <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card card-stat h-100">
-                        <div class="card-body">
-                            <div class="row no-gutters align-items-center">
-                                <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                        Tổng sản phẩm
-                                    </div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${totalProducts}">0</div>
-                                </div>
-                                <div class="col-auto">
-                                    <div class="stat-icon bg-success-gradient">
-                                        <i class="fas fa-box"></i>
-                                    </div>
-                                </div>
+                <!-- Stats Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-3 mb-3">
+                        <div class="stats-card">
+                            <div class="stats-icon users">
+                                <i class="fas fa-users"></i>
                             </div>
+                            <div class="stats-number" id="totalUsers">0</div>
+                            <div class="stats-label">Tổng người dùng</div>
                         </div>
                     </div>
-                </div>
-
-                <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card card-stat h-100">
-                        <div class="card-body">
-                            <div class="row no-gutters align-items-center">
-                                <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                        Tổng danh mục
-                                    </div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${totalCategories}">0</div>
-                                </div>
-                                <div class="col-auto">
-                                    <div class="stat-icon bg-warning-gradient">
-                                        <i class="fas fa-tags"></i>
-                                    </div>
-                                </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="stats-card">
+                            <div class="stats-icon products">
+                                <i class="fas fa-pizza-slice"></i>
                             </div>
+                            <div class="stats-number" id="totalProducts">0</div>
+                            <div class="stats-label">Tổng sản phẩm</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="stats-card">
+                            <div class="stats-icon orders">
+                                <i class="fas fa-clipboard-list"></i>
+                            </div>
+                            <div class="stats-number" id="totalOrders">0</div>
+                            <div class="stats-label">Đơn hàng (30 ngày)</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="stats-card">
+                            <div class="stats-icon revenue">
+                                <i class="fas fa-dollar-sign"></i>
+                            </div>
+                            <div class="stats-number" id="totalRevenue">0</div>
+                            <div class="stats-label">Doanh thu (30 ngày)</div>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="card card-stat h-100">
-                        <div class="card-body">
-                            <div class="row no-gutters align-items-center">
-                                <div class="col mr-2">
-                                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                        Sản phẩm nổi bật
+                <!-- Period Selector -->
+                <div class="period-selector">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Biểu đồ đơn hàng</h5>
+                        <div>
+                            <button class="period-btn active" data-period="day">Ngày</button>
+                            <button class="period-btn" data-period="week">Tuần</button>
+                            <button class="period-btn" data-period="month">Tháng</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="row">
+                    <div class="col-md-8 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Đơn hàng theo thời gian</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="loading-spinner" id="ordersChartLoading">
+                                    <div class="spinner-border" role="status">
+                                        <span class="visually-hidden">Loading...</span>
                                     </div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${#lists.size(featuredProducts)}">0</div>
+                                    <p class="mt-2">Đang tải dữ liệu...</p>
                                 </div>
-                                <div class="col-auto">
-                                    <div class="stat-icon bg-info-gradient">
-                                        <i class="fas fa-star"></i>
-                                    </div>
+                                <div class="chart-container">
+                                    <canvas id="ordersChart"></canvas>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- Featured Products -->
-            <div class="row">
-                <div class="col-lg-6 mb-4">
-                    <div class="card">
-                        <div class="card-header">
-                            <h6 class="m-0 font-weight-bold text-primary">
-                                <i class="fas fa-star me-2"></i>
-                                Sản phẩm nổi bật
-                            </h6>
-                        </div>
-                        <div class="card-body">
-                            <div th:if="${#lists.isEmpty(featuredProducts)}" class="text-center text-muted">
-                                <i class="fas fa-star fa-2x mb-3"></i>
-                                <p>Chưa có sản phẩm nổi bật</p>
+                    <div class="col-md-4 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Thống kê hôm nay</h5>
                             </div>
-                            <div th:each="product : ${featuredProducts}" class="d-flex align-items-center mb-3">
-                                <img th:src="${product.imageUrl}" th:alt="${product.name}"
-                                     class="rounded me-3" style="width: 50px; height: 50px; object-fit: cover;">
-                                <div class="flex-grow-1">
-                                    <h6 class="mb-1" th:text="${product.name}">Product Name</h6>
-                                    <small class="text-muted" th:text="${product.price} + ' VNĐ'">Price</small>
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span>Đơn hàng hôm nay:</span>
+                                    <strong id="todayOrders">0</strong>
                                 </div>
-                                <span class="badge bg-warning">
-                                        <i class="fas fa-star"></i>
-                                    </span>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>Doanh thu hôm nay:</span>
+                                    <strong id="todayRevenue">0 VNĐ</strong>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-lg-6 mb-4">
-                    <div class="card">
-                        <div class="card-header">
-                            <h6 class="m-0 font-weight-bold text-success">
-                                <i class="fas fa-tags me-2"></i>
-                                Danh mục có sản phẩm
-                            </h6>
-                        </div>
-                        <div class="card-body">
-                            <div th:if="${#lists.isEmpty(categoriesWithProducts)}" class="text-center text-muted">
-                                <i class="fas fa-tags fa-2x mb-3"></i>
-                                <p>Chưa có danh mục nào</p>
-                            </div>
-                            <div th:each="category : ${categoriesWithProducts}" class="d-flex align-items-center mb-3">
-                                <img th:src="${category.categoryImageUrl}" th:alt="${category.categoryName}"
-                                     class="rounded me-3" style="width: 50px; height: 50px; object-fit: cover;">
-                                <div class="flex-grow-1">
-                                    <h6 class="mb-1" th:text="${category.categoryName}">Category Name</h6>
-                                    <small class="text-muted" th:text="${category.description}">Description</small>
-                                </div>
-                                <span class="badge bg-success">
-                                        <i class="fas fa-check"></i>
-                                    </span>
-                            </div>
+                <!-- Recent Orders -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Đơn hàng gần đây</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Mã đơn hàng</th>
+                                        <th>Khách hàng</th>
+                                        <th>Trạng thái</th>
+                                        <th>Tổng tiền</th>
+                                        <th>Ngày tạo</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentOrdersTable">
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted">
+                                            <i class="fas fa-spinner fa-spin me-2"></i>
+                                            Đang tải dữ liệu...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Products with Gallery -->
-            <div class="row">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h6 class="m-0 font-weight-bold text-info">
-                                <i class="fas fa-images me-2"></i>
-                                Sản phẩm có nhiều ảnh
-                            </h6>
-                        </div>
-                        <div class="card-body">
-                            <div th:if="${#lists.isEmpty(productsWithGallery)}" class="text-center text-muted">
-                                <i class="fas fa-images fa-2x mb-3"></i>
-                                <p>Chưa có sản phẩm nào có gallery</p>
-                            </div>
-                            <div class="row" th:if="${not #lists.isEmpty(productsWithGallery)}">
-                                <div th:each="product : ${productsWithGallery}" class="col-md-4 mb-3">
-                                    <div class="card">
-                                        <img th:src="${product.imageUrl}" th:alt="${product.name}"
-                                             class="card-img-top" style="height: 200px; object-fit: cover;">
-                                        <div class="card-body">
-                                            <h6 class="card-title" th:text="${product.name}">Product Name</h6>
-                                            <p class="card-text">
-                                                <small class="text-muted" th:text="${product.price} + ' VNĐ'">Price</small>
-                                            </p>
-                                            <span class="badge bg-info">
-                                                    <i class="fas fa-images me-1"></i>
-                                                    <span th:text="${#lists.size(product.galleryUrlsList)}">0</span> ảnh
-                                                </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
+            </main>
+        </div>
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let ordersChart = null;
+        let currentPeriod = 'day';
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCurrentDate();
+            loadDashboardStats();
+            loadOrdersChart('day');
+            setupPeriodButtons();
+        });
+
+        function updateCurrentDate() {
+            const now = new Date();
+            const options = { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                weekday: 'long'
+            };
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('vi-VN', options);
+        }
+
+        function loadDashboardStats() {
+            fetch('/admin/api/dashboard/stats')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const stats = data.data;
+                        document.getElementById('totalUsers').textContent = stats.totalUsers || 0;
+                        document.getElementById('totalProducts').textContent = stats.totalProducts || 0;
+                        document.getElementById('totalOrders').textContent = stats.totalOrders || 0;
+                        document.getElementById('totalRevenue').textContent = formatCurrency(stats.totalRevenue || 0);
+                        document.getElementById('todayOrders').textContent = stats.todayOrders || 0;
+                        document.getElementById('todayRevenue').textContent = formatCurrency(stats.todayRevenue || 0);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading dashboard stats:', error);
+                });
+        }
+
+        function loadOrdersChart(period) {
+            const loadingElement = document.getElementById('ordersChartLoading');
+            loadingElement.style.display = 'block';
+
+            fetch(`/admin/api/dashboard/orders?period=${period}`)
+                .then(response => response.json())
+                .then(data => {
+                    loadingElement.style.display = 'none';
+                    
+                    if (data.success) {
+                        updateOrdersChart(data.data);
+                    } else {
+                        console.error('Error loading chart data:', data.message);
+                    }
+                })
+                .catch(error => {
+                    loadingElement.style.display = 'none';
+                    console.error('Error loading chart data:', error);
+                });
+        }
+
+        function updateOrdersChart(data) {
+            const ctx = document.getElementById('ordersChart').getContext('2d');
+            
+            // Destroy existing chart
+            if (ordersChart) {
+                ordersChart.destroy();
+            }
+
+            ordersChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        {
+                            label: 'Số đơn hàng',
+                            data: data.orderCounts,
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Doanh thu (VNĐ)',
+                            data: data.revenues,
+                            borderColor: '#f093fb',
+                            backgroundColor: 'rgba(240, 147, 251, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Số đơn hàng'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Doanh thu (VNĐ)'
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                        }
+                    }
+                }
+            });
+        }
+
+        function setupPeriodButtons() {
+            const buttons = document.querySelectorAll('.period-btn');
+            buttons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Remove active class from all buttons
+                    buttons.forEach(btn => btn.classList.remove('active'));
+                    
+                    // Add active class to clicked button
+                    this.classList.add('active');
+                    
+                    // Update chart
+                    const period = this.dataset.period;
+                    currentPeriod = period;
+                    loadOrdersChart(period);
+                });
+            });
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).format(amount);
+        }
+    </script>
 </body>
 </html>

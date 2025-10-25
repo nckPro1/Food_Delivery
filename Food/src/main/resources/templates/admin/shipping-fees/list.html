@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý phí ship</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Global Styles */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+        }
+
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin: 6px 15px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+        }
+
+        .sidebar .nav-link:hover {
+            color: white;
+            background: rgba(255,255,255,0.15);
+            transform: translateX(5px);
+        }
+
+        .sidebar .nav-link.active {
+            color: white;
+            background: rgba(255,255,255,0.2);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .sidebar .nav-link i {
+            margin-right: 12px;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        /* Card Styles */
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            border: none;
+            padding: 20px;
+        }
+
+        .card-body {
+            padding: 25px;
+        }
+
+        /* Form Styles */
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 8px;
+        }
+
+        .form-control {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+
+        /* Button Styles */
+        .btn {
+            border-radius: 10px;
+            padding: 12px 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            border: none;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #28a745;
+            border: none;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            border: none;
+        }
+
+        /* Alert Styles */
+        .alert-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 1050;
+            width: 350px;
+        }
+
+        .alert {
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        /* Page Header */
+        .page-header {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .page-header h1 {
+            color: #495057;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        /* Table Styles */
+        .table {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .table thead th {
+            background: #f8f9fa;
+            border: none;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .table tbody td {
+            border: none;
+            vertical-align: middle;
+        }
+
+        .badge {
+            font-size: 0.75em;
+            padding: 0.5em 0.75em;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: #495057;
+        }
+
+        .empty-state p {
+            margin-bottom: 30px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar">
+                <div class="position-sticky pt-3">
+                    <!-- Logo/Brand -->
+                    <div class="text-center mb-4 px-3">
+                        <h4 class="text-white mb-0">
+                            <i class="fas fa-utensils me-2"></i>
+                            Food Admin
+                        </h4>
+                        <small class="text-white-50">Management Panel</small>
+                    </div>
+
+                    <!-- Navigation Menu -->
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/dashboard">
+                                <i class="fas fa-chart-bar"></i>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/products">
+                                <i class="fas fa-pizza-slice"></i>
+                                Sản phẩm
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/categories">
+                                <i class="fas fa-folder"></i>
+                                Danh mục
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/users">
+                                <i class="fas fa-users"></i>
+                                Người dùng
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/orders">
+                                <i class="fas fa-clipboard-list"></i>
+                                Đơn hàng
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/admin/shipping-fees/list">
+                                <i class="fas fa-shipping-fast"></i>
+                                Phí ship
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/store-settings">
+                                <i class="fas fa-store"></i>
+                                Cài đặt nhà hàng
+                            </a>
+                        </li>
+
+                        <!-- Divider -->
+                        <hr class="my-3" style="border-color: rgba(255,255,255,0.2);">
+
+                        <!-- Logout -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/auth/logout">
+                                <i class="fas fa-sign-out-alt"></i>
+                                Đăng xuất
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 main-content">
+                <!-- Page Header -->
+                <div class="page-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h1>Quản lý phí ship</h1>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#shippingFeeModal" onclick="openCreateModal()">
+                            <i class="fas fa-plus"></i> Thêm phí ship
+                        </button>
+                    </div>
+                </div>
+
+                <div id="alertContainer" class="alert-container"></div>
+
+                <!-- Shipping Fees Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Danh sách phí ship</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="shippingFeesTableContainer">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Tên phí ship</th>
+                                            <th>Loại</th>
+                                            <th>Phí ship</th>
+                                            <th>Khoảng giá đơn hàng</th>
+                                            <th>Miễn phí từ</th>
+                                            <th>Trạng thái</th>
+                                            <th>Mặc định</th>
+                                            <th>Thao tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="shippingFeesTableBody">
+                                        <!-- Data will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Empty State -->
+                        <div id="emptyState" class="empty-state" style="display: none;">
+                            <i class="fas fa-shipping-fast"></i>
+                            <h3>Chưa có phí ship nào</h3>
+                            <p>Bắt đầu bằng cách thêm phí ship đầu tiên cho cửa hàng của bạn.</p>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#shippingFeeModal" onclick="openCreateModal()">
+                                <i class="fas fa-plus"></i> Thêm phí ship đầu tiên
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Shipping Fee Modal -->
+    <div class="modal fade" id="shippingFeeModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Thêm phí ship</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="shippingFeeForm">
+                        <input type="hidden" id="shippingFeeId">
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="feeName" class="form-label">Tên phí ship <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="feeName" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="feeType" class="form-label">Loại phí ship <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="feeType" required>
+                                        <option value="DEFAULT">Mặc định</option>
+                                        <option value="ORDER_BASED">Theo giá đơn hàng</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="feeAmount" class="form-label">Phí ship (VNĐ) <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="feeAmount" min="0" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="freeShippingThreshold" class="form-label">Miễn phí từ (VNĐ)</label>
+                                    <input type="number" class="form-control" id="freeShippingThreshold" min="0">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="minOrderAmount" class="form-label">Giá đơn hàng tối thiểu (VNĐ)</label>
+                                    <input type="number" class="form-control" id="minOrderAmount" min="0">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="maxOrderAmount" class="form-label">Giá đơn hàng tối đa (VNĐ)</label>
+                                    <input type="number" class="form-control" id="maxOrderAmount" min="0">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Mô tả</label>
+                            <textarea class="form-control" id="description" rows="3"></textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="isDefault">
+                                    <label class="form-check-label" for="isDefault">
+                                        Đặt làm mặc định
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="isActive" checked>
+                                    <label class="form-check-label" for="isActive">
+                                        Kích hoạt
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary" onclick="saveShippingFee()">Lưu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let shippingFees = [];
+        let isEditMode = false;
+
+        // Load shipping fees on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadShippingFees();
+        });
+
+        function showAlert(type, message) {
+            let alertContainer = document.getElementById('alertContainer');
+            if (!alertContainer) {
+                alertContainer = document.createElement('div');
+                alertContainer.id = 'alertContainer';
+                alertContainer.className = 'alert-container';
+                document.body.appendChild(alertContainer);
+            }
+            
+            alertContainer.innerHTML = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            setTimeout(() => {
+                alertContainer.innerHTML = '';
+            }, 5000);
+        }
+
+        function loadShippingFees() {
+            fetch('/admin/shipping-fees')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        shippingFees = data.data;
+                        renderShippingFeesTable();
+                    } else {
+                        showAlert('danger', 'Lỗi: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('danger', 'Có lỗi xảy ra khi tải danh sách phí ship');
+                });
+        }
+
+        function renderShippingFeesTable() {
+            const tbody = document.getElementById('shippingFeesTableBody');
+            const tableContainer = document.getElementById('shippingFeesTableContainer');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (shippingFees.length === 0) {
+                tableContainer.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            tableContainer.style.display = 'block';
+            emptyState.style.display = 'none';
+            tbody.innerHTML = '';
+
+            shippingFees.forEach(fee => {
+                const row = document.createElement('tr');
+                
+                const priceRange = fee.minOrderAmount || fee.maxOrderAmount ? 
+                    `${formatCurrency(fee.minOrderAmount || 0)} - ${fee.maxOrderAmount ? formatCurrency(fee.maxOrderAmount) : '∞'}` : 
+                    'Tất cả';
+                
+                row.innerHTML = `
+                    <td>${fee.feeName}</td>
+                    <td>
+                        <span class="badge ${fee.feeType === 'DEFAULT' ? 'bg-primary' : 'bg-info'}">
+                            ${fee.feeType === 'DEFAULT' ? 'Mặc định' : 'Theo giá'}
+                        </span>
+                    </td>
+                    <td>${formatCurrency(fee.feeAmount)}</td>
+                    <td>${priceRange}</td>
+                    <td>${fee.freeShippingThreshold ? formatCurrency(fee.freeShippingThreshold) : 'Không'}</td>
+                    <td>
+                        <span class="badge ${fee.isActive ? 'bg-success' : 'bg-secondary'}">
+                            ${fee.isActive ? 'Hoạt động' : 'Tạm dừng'}
+                        </span>
+                    </td>
+                    <td>
+                        ${fee.isDefault ? '<i class="fas fa-star text-warning"></i>' : ''}
+                    </td>
+                    <td>
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-sm btn-outline-primary" onclick="editShippingFee(${fee.shippingFeeId})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            ${!fee.isDefault ? `
+                                <button class="btn btn-sm btn-outline-success" onclick="setDefaultShippingFee(${fee.shippingFeeId})">
+                                    <i class="fas fa-star"></i>
+                                </button>
+                            ` : ''}
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteShippingFee(${fee.shippingFeeId})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).format(amount);
+        }
+
+        function openCreateModal() {
+            isEditMode = false;
+            document.getElementById('modalTitle').textContent = 'Thêm phí ship';
+            document.getElementById('shippingFeeForm').reset();
+            document.getElementById('shippingFeeId').value = '';
+        }
+
+        function editShippingFee(id) {
+            const fee = shippingFees.find(f => f.shippingFeeId === id);
+            if (!fee) return;
+
+            isEditMode = true;
+            document.getElementById('modalTitle').textContent = 'Chỉnh sửa phí ship';
+            
+            // Fill form
+            document.getElementById('shippingFeeId').value = fee.shippingFeeId;
+            document.getElementById('feeName').value = fee.feeName;
+            document.getElementById('feeType').value = fee.feeType;
+            document.getElementById('feeAmount').value = fee.feeAmount;
+            document.getElementById('minOrderAmount').value = fee.minOrderAmount || '';
+            document.getElementById('maxOrderAmount').value = fee.maxOrderAmount || '';
+            document.getElementById('freeShippingThreshold').value = fee.freeShippingThreshold || '';
+            document.getElementById('description').value = fee.description || '';
+            document.getElementById('isDefault').checked = fee.isDefault;
+            document.getElementById('isActive').checked = fee.isActive;
+
+            // Show modal
+            new bootstrap.Modal(document.getElementById('shippingFeeModal')).show();
+        }
+
+        function saveShippingFee() {
+            const formData = {
+                feeName: document.getElementById('feeName').value,
+                feeType: document.getElementById('feeType').value,
+                feeAmount: parseFloat(document.getElementById('feeAmount').value),
+                minOrderAmount: document.getElementById('minOrderAmount').value ? parseFloat(document.getElementById('minOrderAmount').value) : null,
+                maxOrderAmount: document.getElementById('maxOrderAmount').value ? parseFloat(document.getElementById('maxOrderAmount').value) : null,
+                freeShippingThreshold: document.getElementById('freeShippingThreshold').value ? parseFloat(document.getElementById('freeShippingThreshold').value) : null,
+                description: document.getElementById('description').value,
+                isDefault: document.getElementById('isDefault').checked,
+                isActive: document.getElementById('isActive').checked
+            };
+
+            const url = isEditMode ? 
+                `/admin/shipping-fees/${document.getElementById('shippingFeeId').value}` : 
+                '/admin/shipping-fees';
+            const method = isEditMode ? 'PUT' : 'POST';
+
+            fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('success', isEditMode ? 'Cập nhật phí ship thành công!' : 'Tạo phí ship thành công!');
+                    bootstrap.Modal.getInstance(document.getElementById('shippingFeeModal')).hide();
+                    loadShippingFees();
+                } else {
+                    showAlert('danger', 'Lỗi: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('danger', 'Có lỗi xảy ra');
+            });
+        }
+
+        function setDefaultShippingFee(id) {
+            if (confirm('Bạn có chắc chắn muốn đặt làm phí ship mặc định?')) {
+                fetch(`/admin/shipping-fees/${id}/set-default`, {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert('success', 'Đặt phí ship mặc định thành công!');
+                        loadShippingFees();
+                    } else {
+                        showAlert('danger', 'Lỗi: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('danger', 'Có lỗi xảy ra');
+                });
+            }
+        }
+
+        function deleteShippingFee(id) {
+            if (confirm('Bạn có chắc chắn muốn xóa phí ship này?')) {
+                fetch(`/admin/shipping-fees/${id}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert('success', 'Xóa phí ship thành công!');
+                        loadShippingFees();
+                    } else {
+                        showAlert('danger', 'Lỗi: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('danger', 'Có lỗi xảy ra');
+                });
+            }
+        }
+    </script>
+</body>
+</html>

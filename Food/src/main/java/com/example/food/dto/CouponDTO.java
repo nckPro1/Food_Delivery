@@ -1,6 +1,5 @@
 package com.example.food.dto;
 
-import com.example.food.model.FeeType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,19 +12,20 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ShippingFeeDTO {
-    
-    private Long shippingFeeId;
-    private String feeName;
-    private BigDecimal feeAmount;
-    private BigDecimal minOrderAmount;
-    private BigDecimal maxOrderAmount;
-    private BigDecimal freeShippingThreshold;
-    private FeeType feeType;
-    private Boolean isDefault;
-    private Boolean isActive;
+public class CouponDTO {
+    private Long couponId;
+    private String couponCode;
+    private String couponName;
     private String description;
+    private String discountType;
+    private BigDecimal discountValue;
+    private BigDecimal minOrderAmount;
+    private BigDecimal maxDiscountAmount;
+    private Integer usageLimit;
+    private Integer usedCount;
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
+    private Boolean isActive;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
-

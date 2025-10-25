@@ -4,13 +4,11 @@ import com.example.food.dto.ShippingCalculationResponse;
 import com.example.food.dto.StoreSettingsDTO;
 import com.example.food.model.StoreSettings;
 import com.example.food.repository.StoreSettingsRepository;
-import com.example.food.repository.ShippingFeeSettingsRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -18,10 +16,10 @@ import java.util.Optional;
 public class EnhancedShippingFeeService {
     
     private final StoreSettingsRepository storeSettingsRepository;
-    private final ShippingFeeSettingsRepository shippingFeeSettingsRepository;
+    private final ShippingFeeService shippingFeeService;
     
     /**
-     * Tính phí ship dựa trên khu vực (thành phố, quận)
+     * Tính phí ship dựa trên giá trị đơn hàng (đơn giản hóa)
      */
     public ShippingCalculationResponse calculateShippingFee(
             BigDecimal orderAmount, 
@@ -29,41 +27,11 @@ public class EnhancedShippingFeeService {
             String customerDistrict) {
         
         try {
-            // 1. Lấy cấu hình phí ship
-            var shippingSettings = shippingFeeSettingsRepository.findFirstByOrderByCreatedAtDesc();
-            if (shippingSettings.isEmpty() || !shippingSettings.get().getEnabled()) {
-                return createResponse(BigDecimal.ZERO, "Phí ship tạm dừng");
-            }
+            // Sử dụng ShippingFeeService để tính phí ship dựa trên giá đơn hàng
+            BigDecimal shippingFee = shippingFeeService.calculateShippingFee(orderAmount);
             
-            var settings = shippingSettings.get();
-            
-            // 2. Lấy thông tin nhà hàng
-            StoreSettings store = storeSettingsRepository.findByIsActiveTrue()
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy cấu hình nhà hàng"));
-            
-            // 3. Tính phí ship dựa trên khu vực
-            BigDecimal shippingFee;
-            String description;
-            
-            if (customerCity.equals(store.getStoreCity())) {
-                if (customerDistrict.equals(store.getStoreDistrict())) {
-                    // Cùng quận
-                    shippingFee = BigDecimal.valueOf(settings.getSameDistrictFee());
-                    description = "Cùng quận";
-                } else {
-                    // Khác quận
-                    shippingFee = BigDecimal.valueOf(settings.getDifferentDistrictFee());
-                    description = "Khác quận";
-                }
-            } else {
-                // Ngoài thành phố
-                shippingFee = BigDecimal.valueOf(settings.getOutsideCityFee());
-                description = shippingFee.compareTo(BigDecimal.ZERO) == 0 ? "Không nhận đơn" : "Ngoài thành phố";
-            }
-            
-            // 4. Kiểm tra miễn phí ship
-            if (orderAmount.compareTo(BigDecimal.valueOf(settings.getFreeShippingThreshold())) >= 0) {
-                shippingFee = BigDecimal.ZERO;
+            String description = "Phí ship theo giá đơn hàng";
+            if (shippingFee.compareTo(BigDecimal.ZERO) == 0) {
                 description = "Miễn phí ship";
             }
             

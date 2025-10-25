@@ -342,11 +342,11 @@ public class AuthController {
             System.out.println("Email: " + request.getEmail());
             System.out.println("OTP: " + request.getOtp());
             System.out.println("OTP Length: " + request.getOtp().length());
-
+            
             // Validate OTP
             boolean otpValid = otpService.verifyOTP(request.getEmail(), request.getOtp());
             System.out.println("OTP Validation Result: " + otpValid);
-
+            
             if (!otpValid) {
                 System.out.println("❌ OTP validation failed");
                 return ResponseEntity.badRequest().body(
@@ -356,7 +356,7 @@ public class AuthController {
                                 .build()
                 );
             }
-
+            
             System.out.println("✓ OTP validation successful");
 
             // Validate new password
@@ -485,7 +485,7 @@ public class AuthController {
             if (email == null || email.isEmpty()) {
                 email = "test@example.com"; // Default test email
             }
-
+            
             // Tìm hoặc tạo user
             User user = userRepository.findByEmail(email).orElse(null);
             if (user == null) {
@@ -499,11 +499,11 @@ public class AuthController {
                         .build();
                 user = userRepository.save(user);
             }
-
+            
             // Generate tokens
             String accessToken = jwtTokenProvider.generateToken(user.getEmail());
             String refreshToken = authService.createRefreshToken(user);
-
+            
             return ResponseEntity.ok(AuthResponse.builder()
                     .success(true)
                     .message("Test token generated successfully")
@@ -512,7 +512,7 @@ public class AuthController {
                     .tokenType("Bearer")
                     .user(userService.convertToDTO(user))
                     .build());
-
+                    
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(
                     AuthResponse.builder()

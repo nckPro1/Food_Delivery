@@ -10,7 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -124,20 +126,20 @@ public class OrderService {
         // Calculate shipping fee
         BigDecimal shippingFee;
         Integer estimatedDuration = 30; // Default 30 minutes
-
+        
         if (request.getDeliveryCity() != null && request.getDeliveryDistrict() != null) {
             // Use area-based calculation
             ShippingCalculationResponse shippingResponse = enhancedShippingFeeService
-                    .calculateShippingFee(totalAmount, request.getDeliveryCity(), request.getDeliveryDistrict());
-
+                .calculateShippingFee(totalAmount, request.getDeliveryCity(), request.getDeliveryDistrict());
+            
             shippingFee = shippingResponse.getShippingFee();
             estimatedDuration = shippingResponse.getEstimatedDurationMinutes();
-
+            
         } else {
             // Fallback to original calculation
             shippingFee = shippingFeeService.calculateShippingFee(totalAmount);
         }
-
+        
         order.setShippingFee(shippingFee);
 
         // Calculate final amount
@@ -148,13 +150,13 @@ public class OrderService {
 
         // Save order
         Order savedOrder = orderRepository.save(order);
-
+        
         // Ensure finalAmount is calculated after save
         if (savedOrder.getFinalAmount() == null) {
             savedOrder.calculateFinalAmount();
             savedOrder = orderRepository.save(savedOrder);
         }
-
+        
         // Create final reference for lambda
         final Order finalSavedOrder = savedOrder;
 
@@ -251,7 +253,7 @@ public class OrderService {
             throw new IllegalStateException("Order cannot be cancelled");
         }
 
-        // Since we removed CANCELLED status, we'll mark as DONE with cancellation note
+        // Since we don't have CANCELLED status, we'll mark as DONE with cancellation note
         order.setOrderStatus(Order.OrderStatus.DONE);
         order.setDeliveryNotes(order.getDeliveryNotes() + " [ĐÃ HỦY]");
         Order savedOrder = orderRepository.save(order);
@@ -283,6 +285,52 @@ public class OrderService {
                 .todayRevenue(todayRevenue)
                 .thisMonthRevenue(thisMonthRevenue)
                 .build();
+    }
+
+    // ===============================
+    // DASHBOARD ANALYTICS METHODS
+    // ===============================
+
+    /**
+     * Lấy số lượng order theo khoảng thời gian
+     */
+    public long getOrderCountByDateRange(LocalDate startDate, LocalDate endDate) {
+        LocalDateTime startDateTime = startDate.atStartOfDay();
+        LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
+        
+        return orderRepository.countByCreatedAtBetween(startDateTime, endDateTime);
+    }
+
+    /**
+     * Lấy tổng doanh thu theo khoảng thời gian
+     */
+    public double getRevenueByDateRange(LocalDate startDate, LocalDate endDate) {
+        LocalDateTime startDateTime = startDate.atStartOfDay();
+        LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
+        
+        List<Order> orders = orderRepository.findByCreatedAtBetweenAndOrderStatus(
+            startDateTime, endDateTime, Order.OrderStatus.DONE);
+        
+        return orders.stream()
+                .mapToDouble(order -> order.getFinalAmount().doubleValue())
+                .sum();
+    }
+
+    /**
+     * Lấy thống kê order theo trạng thái trong khoảng thời gian
+     */
+    public Map<Order.OrderStatus, Long> getOrderCountByStatusInDateRange(LocalDate startDate, LocalDate endDate) {
+        LocalDateTime startDateTime = startDate.atStartOfDay();
+        LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
+        
+        Map<Order.OrderStatus, Long> statusCounts = new java.util.HashMap<>();
+        
+        for (Order.OrderStatus status : Order.OrderStatus.values()) {
+            long count = orderRepository.countByCreatedAtBetweenAndOrderStatus(startDateTime, endDateTime, status);
+            statusCounts.put(status, count);
+        }
+        
+        return statusCounts;
     }
 
     // ===============================

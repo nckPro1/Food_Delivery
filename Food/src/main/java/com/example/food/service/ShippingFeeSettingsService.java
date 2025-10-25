@@ -106,3 +106,4 @@ public class ShippingFeeSettingsService {
         return result;
     }
 }
+

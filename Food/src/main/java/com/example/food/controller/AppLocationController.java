@@ -93,6 +93,142 @@ public class AppLocationController {
     }
 
     /**
+     * API cho App: Lấy danh sách các thành phố có sẵn
+     */
+    @GetMapping("/cities")
+    public ResponseEntity<ApiResponse<java.util.List<String>>> getAvailableCities() {
+        try {
+            // Danh sách các thành phố chính của Việt Nam
+            java.util.List<String> cities = java.util.Arrays.asList(
+                "ho-chi-minh",
+                "ha-noi", 
+                "da-nang",
+                "hai-phong",
+                "can-tho",
+                "bien-hoa",
+                "nha-trang",
+                "hue",
+                "buon-ma-thuot",
+                "quy-nhon",
+                "vung-tau",
+                "thai-nguyen",
+                "nam-dinh",
+                "thanh-hoa",
+                "long-xuyen",
+                "my-tho",
+                "ca-mau",
+                "rach-gia",
+                "soc-trang",
+                "bac-lieu"
+            );
+
+            return ResponseEntity.ok(ApiResponse.<java.util.List<String>>builder()
+                .success(true)
+                .message("Lấy danh sách thành phố thành công")
+                .data(cities)
+                .build());
+
+        } catch (Exception e) {
+            log.error("Error getting cities: ", e);
+            return ResponseEntity.badRequest().body(ApiResponse.<java.util.List<String>>builder()
+                .success(false)
+                .message("Lỗi lấy danh sách thành phố: " + e.getMessage())
+                .build());
+        }
+    }
+
+    /**
+     * API cho App: Lấy danh sách các quận/huyện theo thành phố
+     */
+    @GetMapping("/districts")
+    public ResponseEntity<ApiResponse<java.util.List<String>>> getDistrictsByCity(
+            @RequestParam String city) {
+        try {
+            java.util.List<String> districts = new java.util.ArrayList<>();
+            
+            switch (city.toLowerCase()) {
+                case "ho-chi-minh":
+                    districts = java.util.Arrays.asList(
+                        "quan-1", "quan-2", "quan-3", "quan-4", "quan-5", "quan-6", "quan-7", "quan-8", "quan-9", "quan-10",
+                        "quan-11", "quan-12", "quan-thu-duc", "quan-go-vap", "quan-binh-thanh", "quan-tan-binh", "quan-tan-phu",
+                        "quan-phu-nhuan", "quan-binh-tan", "quan-hoc-mon", "quan-cu-chi", "quan-binh-chanh", "quan-nha-be", "quan-can-gio"
+                    );
+                    break;
+                case "ha-noi":
+                    districts = java.util.Arrays.asList(
+                        "quan-hoan-kiem", "quan-ba-dinh", "quan-dong-da", "quan-hai-ba-trung", "quan-hoang-mai", "quan-thanh-xuan",
+                        "quan-long-bien", "quan-cau-giay", "quan-dong-anh", "quan-gia-lam", "quan-ha-dong", "quan-hai-ba-trung",
+                        "quan-hoang-mai", "quan-long-bien", "quan-nam-tu-liem", "quan-thanh-tri", "quan-thuong-tin", "quan-ung-hoa"
+                    );
+                    break;
+                case "da-nang":
+                    districts = java.util.Arrays.asList(
+                        "quan-hai-chau", "quan-thanh-khe", "quan-son-tra", "quan-ngu-hanh-son", "quan-lien-chieu", "quan-cam-le",
+                        "huyen-hoa-vang", "huyen-hoang-sa"
+                    );
+                    break;
+                default:
+                    // Mặc định cho các thành phố khác
+                    districts = java.util.Arrays.asList(
+                        "quan-trung-tam", "quan-1", "quan-2", "quan-3", "quan-4", "quan-5",
+                        "huyen-1", "huyen-2", "huyen-3", "huyen-4", "huyen-5"
+                    );
+                    break;
+            }
+
+            return ResponseEntity.ok(ApiResponse.<java.util.List<String>>builder()
+                .success(true)
+                .message("Lấy danh sách quận/huyện thành công")
+                .data(districts)
+                .build());
+
+        } catch (Exception e) {
+            log.error("Error getting districts: ", e);
+            return ResponseEntity.badRequest().body(ApiResponse.<java.util.List<String>>builder()
+                .success(false)
+                .message("Lỗi lấy danh sách quận/huyện: " + e.getMessage())
+                .build());
+        }
+    }
+
+    /**
+     * API cho App: Lấy danh sách các phường/xã theo quận/huyện
+     */
+    @GetMapping("/wards")
+    public ResponseEntity<ApiResponse<java.util.List<String>>> getWardsByDistrict(
+            @RequestParam String city,
+            @RequestParam String district) {
+        try {
+            java.util.List<String> wards = new java.util.ArrayList<>();
+            
+            // Mặc định cho tất cả quận/huyện
+            if (district.startsWith("quan-")) {
+                wards = java.util.Arrays.asList(
+                    "phuong-1", "phuong-2", "phuong-3", "phuong-4", "phuong-5", "phuong-6", "phuong-7", "phuong-8", "phuong-9", "phuong-10",
+                    "phuong-trung-tam", "phuong-dong", "phuong-tay", "phuong-nam", "phuong-bac"
+                );
+            } else if (district.startsWith("huyen-")) {
+                wards = java.util.Arrays.asList(
+                    "xa-trung-tam", "xa-1", "xa-2", "xa-3", "xa-4", "xa-5", "xa-6", "xa-7", "xa-8", "xa-9", "xa-10"
+                );
+            }
+
+            return ResponseEntity.ok(ApiResponse.<java.util.List<String>>builder()
+                .success(true)
+                .message("Lấy danh sách phường/xã thành công")
+                .data(wards)
+                .build());
+
+        } catch (Exception e) {
+            log.error("Error getting wards: ", e);
+            return ResponseEntity.badRequest().body(ApiResponse.<java.util.List<String>>builder()
+                .success(false)
+                .message("Lỗi lấy danh sách phường/xã: " + e.getMessage())
+                .build());
+        }
+    }
+
+    /**
      * API cho App: Lấy thông tin cửa hàng
      */
     @GetMapping("/store-info")

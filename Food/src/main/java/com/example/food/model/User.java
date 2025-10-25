@@ -41,23 +41,11 @@ public class User {
     @Column(name = "phone_number")
     private String phoneNumber;
 
-    @Column(name = "address")
+    @Column(name = "address", columnDefinition = "TEXT")
     private String address;
 
     @Column(name = "avatar_url")
     private String avatarUrl;
-
-    @Column(name = "user_city")
-    private String userCity;
-
-    @Column(name = "user_district")
-    private String userDistrict;
-
-    @Column(name = "user_ward")
-    private String userWard;
-
-    @Column(name = "user_street")
-    private String userStreet;
 
     @Column(name = "role_id")
     @Builder.Default
