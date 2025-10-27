@@ -85,7 +85,7 @@ public class AdminDashboardController {
             model.addAttribute("featuredProducts", featuredProducts);
             model.addAttribute("categoriesWithProducts", categoriesWithProducts);
             model.addAttribute("productsWithGallery", productsWithGallery);
-            model.addAttribute("pageTitle", "Admin Dashboard");
+            model.addAttribute("pageTitle", "Dashboard - Tổng quan");
 
             return "admin/dashboard";
         } catch (Exception e) {
@@ -97,7 +97,7 @@ public class AdminDashboardController {
             model.addAttribute("featuredProducts", new java.util.ArrayList<>());
             model.addAttribute("categoriesWithProducts", new java.util.ArrayList<>());
             model.addAttribute("productsWithGallery", new java.util.ArrayList<>());
-            model.addAttribute("pageTitle", "Admin Dashboard");
+            model.addAttribute("pageTitle", "Dashboard - Tổng quan");
             return "admin/dashboard";
         }
     }

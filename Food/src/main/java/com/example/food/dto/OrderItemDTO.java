@@ -22,6 +22,7 @@ public class OrderItemDTO {
     private String productImageUrl;
     private Integer quantity;
     private BigDecimal unitPrice;
+    private BigDecimal salePrice;
     private BigDecimal totalPrice;
     private String specialInstructions;
     private List<OrderItemOptionDTO> orderItemOptions;

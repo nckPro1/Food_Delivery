@@ -122,7 +122,7 @@ public class Product {
 
     // Sale helper methods
     public BigDecimal getCurrentPrice() {
-        if (isOnSale() && isSaleActive()) {
+        if (isOnSale && isSaleActive()) {
             if (salePrice != null) {
                 return salePrice;
             } else if (salePercentage != null) {
@@ -133,21 +133,21 @@ public class Product {
     }
 
     public boolean isSaleActive() {
-        if (!isOnSale()) return false;
+        if (!isOnSale) return false;
         LocalDateTime now = LocalDateTime.now();
         return (saleStartDate == null || now.isAfter(saleStartDate)) && 
                (saleEndDate == null || now.isBefore(saleEndDate));
     }
 
     public BigDecimal getDiscountAmount() {
-        if (isOnSale() && isSaleActive()) {
+        if (isOnSale && isSaleActive()) {
             return price.subtract(getCurrentPrice());
         }
         return BigDecimal.ZERO;
     }
 
     public Integer getDiscountPercentage() {
-        if (isOnSale() && isSaleActive()) {
+        if (isOnSale && isSaleActive()) {
             if (salePercentage != null) {
                 return salePercentage;
             } else if (salePrice != null) {

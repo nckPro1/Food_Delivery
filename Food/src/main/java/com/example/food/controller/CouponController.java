@@ -15,8 +15,8 @@ public class CouponController {
 
     private final CouponService couponService;
 
-    @GetMapping("/validate")
-    public ResponseEntity<CouponDTO> validateCoupon(@RequestParam String couponCode, @RequestParam BigDecimal orderAmount) {
+    @GetMapping("/validate/{couponCode}")
+    public ResponseEntity<CouponDTO> validateCoupon(@PathVariable String couponCode, @RequestParam(defaultValue = "0") BigDecimal orderAmount) {
         CouponDTO coupon = couponService.validateCoupon(couponCode, orderAmount);
         return ResponseEntity.ok(coupon);
     }

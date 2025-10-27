@@ -566,7 +566,7 @@
                                 <div class="option-detail">
                                     <div class="option-detail-label">Giá thêm</div>
                                     <div class="option-detail-value option-price"
-                                         th:text="${option.extraPrice != null ? (#numbers.formatDecimal(option.extraPrice, 0, 'COMMA', 0, 'POINT') + 'đ') : 'Miễn phí'}">
+                                         th:text="${option.price != null and option.price > 0 ? (#numbers.formatDecimal(option.price, 0, 'COMMA', 0, 'POINT') + 'đ') : 'Miễn phí'}">
                                         0đ
                                     </div>
                                 </div>

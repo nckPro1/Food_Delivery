@@ -3,9 +3,8 @@ package com.example.food.controller;
 import com.example.food.dto.*;
 import com.example.food.model.Order;
 import com.example.food.service.OrderService;
-import com.example.food.service.ShippingFeeService;
-import com.example.food.service.EnhancedShippingFeeService;
 import com.example.food.service.UserService;
+import com.example.food.service.ShippingFeeSettingsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -13,8 +12,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
+import java.math.BigDecimal;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -23,28 +23,27 @@ import java.util.List;
 public class OrderController {
 
     private final OrderService orderService;
-    private final ShippingFeeService shippingFeeService;
-    private final EnhancedShippingFeeService enhancedShippingFeeService;
     private final UserService userService;
+    private final ShippingFeeSettingsService shippingFeeSettingsService;
 
     // ===============================
     // HELPER METHODS
     // ===============================
-    
+
     /**
      * Lấy user hiện tại từ authentication context
      */
     private com.example.food.model.User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() || 
-            "anonymousUser".equals(authentication.getPrincipal())) {
+        if (authentication == null || !authentication.isAuthenticated() ||
+                "anonymousUser".equals(authentication.getPrincipal())) {
             throw new IllegalStateException("Người dùng chưa đăng nhập");
         }
-        
+
         String email = authentication.getName();
         return userService.getUserByEmail(email);
     }
-    
+
     /**
      * Test endpoint để kiểm tra authentication
      */
@@ -52,10 +51,10 @@ public class OrderController {
     public ResponseEntity<ApiResponse<String>> testAuth() {
         try {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            String message = "Authentication: " + authentication + 
-                           ", Principal: " + (authentication != null ? authentication.getPrincipal() : "null") +
-                           ", Authenticated: " + (authentication != null ? authentication.isAuthenticated() : "null");
-            
+            String message = "Authentication: " + authentication +
+                    ", Principal: " + (authentication != null ? authentication.getPrincipal() : "null") +
+                    ", Authenticated: " + (authentication != null ? authentication.isAuthenticated() : "null");
+
             return ResponseEntity.ok(ApiResponse.<String>builder()
                     .success(true)
                     .message("Test authentication")
@@ -68,7 +67,7 @@ public class OrderController {
                     .build());
         }
     }
-    
+
     /**
      * Test endpoint để tạo order với userId cụ thể (tạm thời để test)
      */
@@ -76,7 +75,7 @@ public class OrderController {
     public ResponseEntity<ApiResponse<OrderDTO>> testCreateOrder(@RequestBody CreateOrderRequest request) {
         try {
             log.info("Test create order - UserId from request: {}", request.getUserId());
-            
+
             // Nếu không có userId trong request, sử dụng user mặc định
             if (request.getUserId() == null) {
                 // Tìm user đầu tiên trong database để test
@@ -102,9 +101,9 @@ public class OrderController {
                 request.setUserId(defaultUser.getUserId());
                 log.info("Using default user for test: {} with address: {}", defaultUser.getUserId(), defaultUser.getAddress());
             }
-            
+
             OrderDTO order = orderService.createOrder(request);
-            
+
             return ResponseEntity.ok(ApiResponse.<OrderDTO>builder()
                     .success(true)
                     .message("Test order created successfully")
@@ -124,53 +123,26 @@ public class OrderController {
     // ===============================
 
     /**
-     * Tính phí ship với địa chỉ khu vực
-     */
-    @PostMapping("/calculate-shipping")
-    public ResponseEntity<ApiResponse<ShippingCalculationResponse>> calculateShipping(
-            @RequestBody ShippingCalculationRequest request) {
-        try {
-            ShippingCalculationResponse response = enhancedShippingFeeService.calculateShippingFee(
-                request.getOrderAmount(),
-                request.getDeliveryCity(),
-                request.getDeliveryDistrict()
-            );
-            
-            return ResponseEntity.ok(ApiResponse.<ShippingCalculationResponse>builder()
-                .success(true)
-                .message("Tính phí ship thành công")
-                .data(response)
-                .build());
-        } catch (Exception e) {
-            log.error("Error calculating shipping fee: ", e);
-            return ResponseEntity.badRequest().body(ApiResponse.<ShippingCalculationResponse>builder()
-                .success(false)
-                .message("Lỗi tính phí ship: " + e.getMessage())
-                .build());
-        }
-    }
-
-    /**
      * Tạo đơn hàng mới
      */
     @PostMapping
     public ResponseEntity<ApiResponse<OrderDTO>> createOrder(@RequestBody CreateOrderRequest request) {
         try {
             log.debug("OrderController - createOrder called");
-            
+
             // Debug authentication context
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            log.debug("OrderController - Authentication: {}, Principal: {}, Authenticated: {}", 
-                     authentication, 
-                     authentication != null ? authentication.getPrincipal() : "null",
-                     authentication != null ? authentication.isAuthenticated() : "null");
-            
+            log.debug("OrderController - Authentication: {}, Principal: {}, Authenticated: {}",
+                    authentication,
+                    authentication != null ? authentication.getPrincipal() : "null",
+                    authentication != null ? authentication.isAuthenticated() : "null");
+
             // Lấy user hiện tại từ authentication context
             com.example.food.model.User currentUser = getCurrentUser();
-            
+
             // Set userId vào request
             request.setUserId(currentUser.getUserId());
-            
+
             log.info("Creating order for user: {} (email: {})", currentUser.getUserId(), currentUser.getEmail());
 
             OrderDTO order = orderService.createOrder(request);
@@ -303,61 +275,43 @@ public class OrderController {
         }
     }
 
-    // ===============================
-    // SHIPPING CALCULATION APIs
-    // ===============================
-
     /**
-     * Tính phí ship dựa trên địa chỉ (cho mobile app)
+     * Lấy thông tin phí ship từ database
      */
-    @GetMapping("/api/shipping-fee")
-    public ResponseEntity<ApiResponse<ShippingCalculationResponse>> calculateShippingFeeByAddress(
-            @RequestParam String address,
-            @RequestParam(required = false) BigDecimal orderAmount) {
+    @GetMapping("/shipping-fee")
+    public ResponseEntity<ApiResponse<ShippingFeeInfo>> getShippingFeeInfo() {
         try {
-            // Sử dụng ShippingFeeService để tính phí ship
-            BigDecimal shippingFee = shippingFeeService.calculateShippingFee(orderAmount != null ? orderAmount : BigDecimal.ZERO);
-            
-            ShippingCalculationResponse response = ShippingCalculationResponse.builder()
-                    .shippingFee(shippingFee)
-                    .distanceKm(BigDecimal.ZERO)
-                    .estimatedDurationMinutes(30)
-                    .fromCache(false)
-                    .build();
+            log.info("Getting shipping fee info");
 
-            return ResponseEntity.ok(ApiResponse.<ShippingCalculationResponse>builder()
-                    .success(true)
-                    .message("Tính phí ship thành công")
-                    .data(response)
-                    .build());
-        } catch (Exception e) {
-            log.error("Error calculating shipping fee: ", e);
-            return ResponseEntity.badRequest().body(ApiResponse.<ShippingCalculationResponse>builder()
-                    .success(false)
-                    .message("Lỗi tính phí ship: " + e.getMessage())
-                    .build());
-        }
-    }
+            // Lấy cài đặt phí ship hiện tại
+            Optional<ShippingFeeSettingsDTO> settings = shippingFeeSettingsService.getCurrentSettings();
 
-    /**
-     * Lấy thông tin phí ship mặc định (cho mobile app)
-     */
-    @GetMapping("/api/shipping-fee/default")
-    public ResponseEntity<ApiResponse<ShippingFeeInfo>> getDefaultShippingFeeInfo() {
-        try {
-            ShippingFeeInfo feeInfo = shippingFeeService.getDefaultShippingFeeInfo();
-            
+            ShippingFeeInfo info = new ShippingFeeInfo();
+            if (settings.isPresent()) {
+                ShippingFeeSettingsDTO dto = settings.get();
+                info.setDefaultShippingFee(dto.getFixedShippingFee());
+                info.setFreeShippingThreshold(dto.getFreeShippingThreshold());
+                info.setMinOrderAmount(BigDecimal.valueOf(50000)); // Default min order amount
+            } else {
+                // Fallback to 0 when no settings
+                info.setDefaultShippingFee(BigDecimal.ZERO);
+                info.setFreeShippingThreshold(BigDecimal.ZERO);
+                info.setMinOrderAmount(BigDecimal.valueOf(50000));
+            }
+
             return ResponseEntity.ok(ApiResponse.<ShippingFeeInfo>builder()
                     .success(true)
                     .message("Lấy thông tin phí ship thành công")
-                    .data(feeInfo)
+                    .data(info)
                     .build());
+
         } catch (Exception e) {
-            log.error("Error getting default shipping fee info: ", e);
+            log.error("Error getting shipping fee info: {}", e.getMessage(), e);
             return ResponseEntity.badRequest().body(ApiResponse.<ShippingFeeInfo>builder()
                     .success(false)
-                    .message("Lỗi lấy thông tin phí ship: " + e.getMessage())
+                    .message("Lỗi khi lấy thông tin phí ship: " + e.getMessage())
                     .build());
         }
     }
+
 }

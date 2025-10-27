@@ -49,7 +49,7 @@ public class AdminUserController {
             model.addAttribute("sortBy", sortBy);
             model.addAttribute("sortDir", sortDir);
             model.addAttribute("search", search);
-            model.addAttribute("pageTitle", "Quản lý người dùng");
+            model.addAttribute("pageTitle", "Người dùng - Danh sách");
 
             return "admin/users/list";
         } catch (Exception e) {
@@ -69,7 +69,7 @@ public class AdminUserController {
                     .orElseThrow(() -> new IllegalArgumentException("Người dùng không tồn tại"));
 
             model.addAttribute("user", user);
-            model.addAttribute("pageTitle", "Chi tiết người dùng: " + user.getFullName());
+            model.addAttribute("pageTitle", "Người dùng - Chi tiết");
 
             return "admin/users/view";
         } catch (Exception e) {

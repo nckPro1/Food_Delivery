@@ -26,14 +26,12 @@ public class OrderDTO {
     private BigDecimal totalAmount;
     private BigDecimal shippingFee;
     private BigDecimal discountAmount;
+    private BigDecimal couponDiscount;
     private BigDecimal finalAmount;
     private Order.PaymentStatus paymentStatus;
     private Order.PaymentMethod paymentMethod;
     private String deliveryAddress;
     private String deliveryNotes;
-    private BigDecimal deliveryLatitude;
-    private BigDecimal deliveryLongitude;
-    private BigDecimal calculatedDistanceKm;
     private LocalDateTime estimatedDeliveryTime;
     private LocalDateTime actualDeliveryTime;
     private LocalDateTime createdAt;

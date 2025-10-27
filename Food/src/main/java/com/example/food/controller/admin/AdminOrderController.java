@@ -35,7 +35,7 @@ public class AdminOrderController {
             // Get all orders (you can add pagination later)
             List<OrderDTO> orders = orderService.getAllOrders();
             model.addAttribute("orders", orders);
-            model.addAttribute("pageTitle", "Quản lý đơn hàng");
+            model.addAttribute("pageTitle", "Đơn hàng - Danh sách");
             return "admin/orders/list";
         } catch (Exception e) {
             log.error("Error loading orders page: ", e);
@@ -54,7 +54,7 @@ public class AdminOrderController {
                     .orElseThrow(() -> new IllegalArgumentException("Đơn hàng không tồn tại"));
 
             model.addAttribute("order", order);
-            model.addAttribute("pageTitle", "Chi tiết đơn hàng: " + order.getOrderNumber());
+            model.addAttribute("pageTitle", "Đơn hàng - Chi tiết");
             return "admin/orders/detail";
         } catch (Exception e) {
             log.error("Error loading order detail page for ID {}: ", orderId, e);

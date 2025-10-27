@@ -204,75 +204,7 @@
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            <nav class="col-md-3 col-lg-2 d-md-block sidebar">
-                <div class="position-sticky pt-3">
-                    <!-- Logo/Brand -->
-                    <div class="text-center mb-4 px-3">
-                        <h4 class="text-white mb-0">
-                            <i class="fas fa-utensils me-2"></i>
-                            Food Admin
-                        </h4>
-                        <small class="text-white-50">Management Panel</small>
-                    </div>
-
-                    <!-- Navigation Menu -->
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link active" href="/admin/dashboard">
-                                <i class="fas fa-chart-bar"></i>
-                                Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/admin/products">
-                                <i class="fas fa-pizza-slice"></i>
-                                Sản phẩm
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/admin/categories">
-                                <i class="fas fa-folder"></i>
-                                Danh mục
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/admin/users">
-                                <i class="fas fa-users"></i>
-                                Người dùng
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/admin/orders">
-                                <i class="fas fa-clipboard-list"></i>
-                                Đơn hàng
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/admin/shipping-fees/list">
-                                <i class="fas fa-shipping-fast"></i>
-                                Phí ship
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/admin/store-settings">
-                                <i class="fas fa-store"></i>
-                                Cài đặt nhà hàng
-                            </a>
-                        </li>
-
-                        <!-- Divider -->
-                        <hr class="my-3" style="border-color: rgba(255,255,255,0.2);">
-
-                        <!-- Logout -->
-                        <li class="nav-item">
-                            <a class="nav-link" href="/admin/auth/logout">
-                                <i class="fas fa-sign-out-alt"></i>
-                                Đăng xuất
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
+            <div th:replace="admin/fragments/sidebar :: sidebar"></div>
 
             <!-- Main content -->
             <main class="col-md-9 ms-sm-auto col-lg-10 main-content">

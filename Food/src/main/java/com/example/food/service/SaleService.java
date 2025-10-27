@@ -32,10 +32,10 @@ public class SaleService {
                 .collect(Collectors.toList());
     }
 
-    public List<SaleDTO> getSalesByProduct(Long productId) {
-        return saleRepository.findByProductIdAndIsActiveTrue(productId).stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public SaleDTO getSaleById(Long saleId) {
+        Sale sale = saleRepository.findById(saleId)
+                .orElseThrow(() -> new RuntimeException("Sale not found"));
+        return convertToDTO(sale);
     }
 
     @Transactional
@@ -53,10 +53,10 @@ public class SaleService {
                 .build();
 
         Sale savedSale = saleRepository.save(sale);
-        
+
         // Update product sale fields
         updateProductSaleFields(savedSale);
-        
+
         return convertToDTO(savedSale);
     }
 
@@ -74,10 +74,10 @@ public class SaleService {
         sale.setEndDate(request.getEndDate());
 
         Sale savedSale = saleRepository.save(sale);
-        
+
         // Update product sale fields
         updateProductSaleFields(savedSale);
-        
+
         return convertToDTO(savedSale);
     }
 
@@ -87,7 +87,7 @@ public class SaleService {
                 .orElseThrow(() -> new RuntimeException("Sale not found"));
 
         saleRepository.delete(sale);
-        
+
         // Clear product sale fields
         clearProductSaleFields(sale.getProductId());
     }
@@ -99,14 +99,14 @@ public class SaleService {
 
         sale.setIsActive(!sale.getIsActive());
         Sale savedSale = saleRepository.save(sale);
-        
+
         // Update product sale fields
         if (savedSale.getIsActive()) {
             updateProductSaleFields(savedSale);
         } else {
             clearProductSaleFields(savedSale.getProductId());
         }
-        
+
         return convertToDTO(savedSale);
     }
 
@@ -116,12 +116,12 @@ public class SaleService {
 
         product.setIsOnSale(true);
         product.setSalePrice(sale.getSalePrice());
-        product.setSalePercentage(sale.getDiscountType() == Sale.DiscountType.PERCENTAGE ? 
+        product.setSalePercentage(sale.getDiscountType() == Sale.DiscountType.PERCENTAGE ?
                 sale.getDiscountValue().intValue() : null);
         product.setSaleStartDate(sale.getStartDate());
         product.setSaleEndDate(sale.getEndDate());
 
-        productService.updateProduct(product);
+        productService.updateProduct(product.getProductId(), product);
     }
 
     private void clearProductSaleFields(Long productId) {
@@ -134,7 +134,7 @@ public class SaleService {
         product.setSaleStartDate(null);
         product.setSaleEndDate(null);
 
-        productService.updateProduct(product);
+        productService.updateProduct(product.getProductId(), product);
     }
 
     private SaleDTO convertToDTO(Sale sale) {

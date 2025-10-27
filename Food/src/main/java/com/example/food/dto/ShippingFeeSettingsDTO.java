@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -14,10 +15,8 @@ import java.time.LocalDateTime;
 public class ShippingFeeSettingsDTO {
     
     private Long id;
-    private Integer sameDistrictFee;
-    private Integer differentDistrictFee;
-    private Integer outsideCityFee;
-    private Integer freeShippingThreshold;
+    private BigDecimal fixedShippingFee;        // Phí ship cố định
+    private BigDecimal freeShippingThreshold;   // Ngưỡng miễn phí ship
     private Boolean enabled;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

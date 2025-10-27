@@ -6,8 +6,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-
 @Data
 @Builder
 @NoArgsConstructor
@@ -21,9 +19,5 @@ public class UserDTO {
     private String avatarUrl;
     private Integer roleId;
     private AuthProvider authProvider;
-    private String userCity;
-    private String userDistrict;
-    private String userWard;
-    private String userStreet;
 }
 

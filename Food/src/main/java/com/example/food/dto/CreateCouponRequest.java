@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateCouponRequest {
+    private Long couponId; // For update operations
     private String couponCode;
     private String couponName;
     private String description;

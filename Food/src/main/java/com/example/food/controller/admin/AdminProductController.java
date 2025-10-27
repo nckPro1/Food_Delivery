@@ -46,7 +46,7 @@ public class AdminProductController {
      */
     @GetMapping("/simple")
     public String simpleProducts(Model model) {
-        model.addAttribute("pageTitle", "Sản phẩm đơn giản");
+        model.addAttribute("pageTitle", "Sản phẩm - Đơn giản");
         return "admin/products/simple";
     }
 
@@ -89,13 +89,13 @@ public class AdminProductController {
             model.addAttribute("sortDir", sortDir);
             model.addAttribute("search", search);
             model.addAttribute("categoryId", categoryId);
-            model.addAttribute("pageTitle", "Quản lý sản phẩm");
+            model.addAttribute("pageTitle", "Sản phẩm - Danh sách");
 
             return "admin/products/list";
         } catch (Exception e) {
             log.error("Error loading products page: ", e);
             model.addAttribute("error", "Lỗi tải danh sách sản phẩm: " + e.getMessage());
-            model.addAttribute("pageTitle", "Quản lý sản phẩm");
+            model.addAttribute("pageTitle", "Sản phẩm - Danh sách");
             return "admin/products/list";
         }
     }
@@ -109,12 +109,12 @@ public class AdminProductController {
             List<Category> categories = productService.getAllActiveCategories();
             model.addAttribute("categories", categories);
             model.addAttribute("product", new Product());
-            model.addAttribute("pageTitle", "Tạo sản phẩm mới");
+            model.addAttribute("pageTitle", "Sản phẩm - Tạo mới");
             return "admin/products/create";
         } catch (Exception e) {
             log.error("Error loading create product page: ", e);
             model.addAttribute("error", "Lỗi tải trang tạo sản phẩm: " + e.getMessage());
-            model.addAttribute("pageTitle", "Tạo sản phẩm mới");
+            model.addAttribute("pageTitle", "Sản phẩm - Tạo mới");
             return "admin/products/create";
         }
     }
@@ -132,7 +132,7 @@ public class AdminProductController {
 
             model.addAttribute("product", product);
             model.addAttribute("categories", categories);
-            model.addAttribute("pageTitle", "Chỉnh sửa sản phẩm: " + product.getName());
+            model.addAttribute("pageTitle", "Sản phẩm - Chỉnh sửa");
 
             return "admin/products/edit";
         } catch (Exception e) {
@@ -152,7 +152,7 @@ public class AdminProductController {
                     .orElseThrow(() -> new IllegalArgumentException("Sản phẩm không tồn tại"));
 
             model.addAttribute("product", product);
-            model.addAttribute("pageTitle", "Chi tiết sản phẩm: " + product.getName());
+            model.addAttribute("pageTitle", "Sản phẩm - Chi tiết");
 
             return "admin/products/view";
         } catch (Exception e) {
@@ -255,7 +255,7 @@ public class AdminProductController {
         } catch (Exception e) {
             log.error("Error creating product: ", e);
             model.addAttribute("error", "Lỗi tạo sản phẩm: " + e.getMessage());
-            model.addAttribute("pageTitle", "Tạo sản phẩm mới");
+            model.addAttribute("pageTitle", "Sản phẩm - Tạo mới");
             try {
                 List<Category> categories = productService.getAllActiveCategories();
                 model.addAttribute("categories", categories);

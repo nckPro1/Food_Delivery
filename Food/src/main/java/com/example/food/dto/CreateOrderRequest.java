@@ -5,7 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Data
@@ -17,10 +16,6 @@ public class CreateOrderRequest {
     private Long userId;
     private String deliveryAddress; // Delivery address for this specific order
     private String deliveryNotes; // Optional delivery notes
-    private String deliveryCity; // Delivery city
-    private String deliveryDistrict; // Delivery district
-    private String deliveryWard; // Delivery ward
-    private String deliveryStreet; // Delivery street
     private String paymentMethod;
     private List<OrderItemRequest> orderItems;
     private String couponCode; // Optional coupon code

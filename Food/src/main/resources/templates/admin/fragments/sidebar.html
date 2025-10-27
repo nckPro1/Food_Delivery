@@ -44,6 +44,18 @@
           </a>
         </li>
         <li class="nav-item">
+          <a class="nav-link" href="/admin/sales" th:classappend="${#strings.startsWith(pageTitle, 'Sale')} ? 'active' : ''">
+            <i class="fas fa-tags me-2"></i>
+            Sale
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/admin/coupons" th:classappend="${#strings.startsWith(pageTitle, 'Coupon')} ? 'active' : ''">
+            <i class="fas fa-ticket-alt me-2"></i>
+            Coupon
+          </a>
+        </li>
+        <li class="nav-item">
           <a class="nav-link" href="/admin/shipping-fees/list" th:classappend="${#strings.startsWith(pageTitle, 'Phí ship')} ? 'active' : ''">
             <i class="fas fa-shipping-fast me-2"></i>
             Phí ship

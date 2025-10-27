@@ -53,10 +53,6 @@ public class UserService implements UserDetailsService {
                 .avatarUrl(user.getAvatarUrl())
                 .roleId(user.getRoleId())
                 .authProvider(user.getAuthProvider())
-                .userCity(user.getUserCity())
-                .userDistrict(user.getUserDistrict())
-                .userWard(user.getUserWard())
-                .userStreet(user.getUserStreet())
                 .build();
     }
 

@@ -26,3 +26,5 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
     Optional<Sale> findByProductIdAndIsActiveTrueAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
             Long productId, LocalDateTime now, LocalDateTime now2);
 }
+
+

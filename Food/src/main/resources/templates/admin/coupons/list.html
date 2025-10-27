@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle}">Coupon Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+        }
+
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin: 6px 15px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+        }
+
+        .sidebar .nav-link:hover {
+            color: white;
+            background: rgba(255,255,255,0.15);
+            transform: translateX(5px);
+        }
+
+        .sidebar .nav-link.active {
+            color: white;
+            background: rgba(255,255,255,0.2);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 500;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            border: none;
+            border-radius: 10px;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border: none;
+            border-radius: 10px;
+        }
+
+        .badge {
+            border-radius: 20px;
+            padding: 8px 15px;
+            font-weight: 500;
+        }
+
+        .table {
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .table thead th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            font-weight: 600;
+        }
+
+        .table tbody tr:hover {
+            background-color: rgba(102, 126, 234, 0.05);
+        }
+
+        .coupon-code {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
+
+        <!-- Main content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 main-content">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="text-primary">
+                    <i class="fas fa-ticket-alt me-2"></i>
+                    Quản lý Coupon
+                </h1>
+                <a href="/admin/coupons/add" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>
+                    Thêm Coupon
+                </a>
+            </div>
+
+            <!-- Flash Messages -->
+            <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
+                <span th:text="${successMessage}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <span th:text="${errorMessage}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <!-- Coupons Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list me-2"></i>
+                        Danh sách Coupon
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Mã Coupon</th>
+                                <th>Tên</th>
+                                <th>Loại giảm giá</th>
+                                <th>Giá trị</th>
+                                <th>Đơn hàng tối thiểu</th>
+                                <th>Giới hạn sử dụng</th>
+                                <th>Đã sử dụng</th>
+                                <th>Ngày bắt đầu</th>
+                                <th>Ngày kết thúc</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="coupon : ${coupons}">
+                                <td th:text="${coupon.couponId}"></td>
+                                <td>
+                                    <span class="coupon-code" th:text="${coupon.couponCode}"></span>
+                                </td>
+                                <td>
+                                    <strong th:text="${coupon.couponName}"></strong>
+                                    <br>
+                                    <small class="text-muted" th:text="${coupon.description}"></small>
+                                </td>
+                                <td>
+                                            <span class="badge"
+                                                  th:classappend="${coupon.discountType == 'PERCENTAGE'} ? 'bg-info' : 'bg-warning'"
+                                                  th:text="${coupon.discountType == 'PERCENTAGE'} ? 'Phần trăm' : 'Số tiền'">
+                                            </span>
+                                </td>
+                                <td>
+                                            <span th:if="${coupon.discountType == 'PERCENTAGE'}"
+                                                  th:text="${coupon.discountValue} + '%'"></span>
+                                    <span th:if="${coupon.discountType == 'FIXED_AMOUNT'}"
+                                          th:text="${#numbers.formatDecimal(coupon.discountValue, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></span>
+                                </td>
+                                <td th:text="${#numbers.formatDecimal(coupon.minOrderAmount, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></td>
+                                <td th:text="${coupon.usageLimit != null ? coupon.usageLimit : 'Không giới hạn'}"></td>
+                                <td>
+                                    <span th:text="${coupon.usedCount}"></span>
+                                    <span th:if="${coupon.usageLimit != null}"
+                                          th:text="'/' + ${coupon.usageLimit}"></span>
+                                </td>
+                                <td th:text="${#temporals.format(coupon.startDate, 'dd/MM/yyyy HH:mm')}"></td>
+                                <td th:text="${#temporals.format(coupon.endDate, 'dd/MM/yyyy HH:mm')}"></td>
+                                <td>
+                                            <span class="badge"
+                                                  th:classappend="${coupon.isActive} ? 'bg-success' : 'bg-secondary'"
+                                                  th:text="${coupon.isActive} ? 'Hoạt động' : 'Tạm dừng'">
+                                            </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a th:href="@{/admin/coupons/edit/{id}(id=${coupon.couponId})}"
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form th:action="@{/admin/coupons/toggle/{id}(id=${coupon.couponId})}"
+                                              method="post" style="display: inline;">
+                                            <button type="submit"
+                                                    th:classappend="${coupon.isActive} ? 'btn-warning' : 'btn-success'"
+                                                    class="btn btn-sm">
+                                                <i th:classappend="${coupon.isActive} ? 'fas fa-pause' : 'fas fa-play'"></i>
+                                            </button>
+                                        </form>
+                                        <form th:action="@{/admin/coupons/delete/{id}(id=${coupon.couponId})}"
+                                              method="post" style="display: inline;"
+                                              onsubmit="return confirm('Bạn có chắc chắn muốn xóa coupon này?')">
+                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(coupons)}">
+                                <td colspan="12" class="text-center text-muted py-4">
+                                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                                    <br>
+                                    Chưa có coupon nào
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

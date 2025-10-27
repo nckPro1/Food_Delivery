@@ -56,7 +56,12 @@ public class OrderItem {
 
     // Helper methods
     public void calculateTotalPrice() {
-        BigDecimal basePrice = unitPrice.multiply(BigDecimal.valueOf(quantity));
+        // Use sale price if available, otherwise use unit price
+        BigDecimal priceToUse = (salePrice != null && salePrice.compareTo(BigDecimal.ZERO) > 0)
+                ? salePrice
+                : unitPrice;
+
+        BigDecimal basePrice = priceToUse.multiply(BigDecimal.valueOf(quantity));
         BigDecimal optionsPrice = BigDecimal.ZERO;
 
         if (orderItemOptions != null) {
