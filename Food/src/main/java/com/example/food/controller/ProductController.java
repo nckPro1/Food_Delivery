@@ -324,6 +324,14 @@ public class ProductController {
             categoryDTO = convertCategoryToDTO(product.getCategory());
         }
 
+        // Convert options to DTOs
+        List<ProductOptionDTO> optionDTOs = null;
+        if (product.getOptions() != null && !product.getOptions().isEmpty()) {
+            optionDTOs = product.getOptions().stream()
+                    .map(this::convertOptionToDTO)
+                    .collect(Collectors.toList());
+        }
+
         return ProductDTO.builder()
                 .productId(product.getProductId())
                 .name(product.getName())
@@ -336,6 +344,12 @@ public class ProductController {
                 .isFeatured(product.getIsFeatured())
                 .preparationTime(product.getPreparationTime())
                 .category(categoryDTO)
+                .options(optionDTOs) // Add options
+                .salePrice(product.getSalePrice()) // Add sale fields
+                .salePercentage(product.getSalePercentage())
+                .isOnSale(product.getIsOnSale())
+                .saleStartDate(product.getSaleStartDate() != null ? product.getSaleStartDate().toString() : null)
+                .saleEndDate(product.getSaleEndDate() != null ? product.getSaleEndDate().toString() : null)
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
                 .build();
@@ -351,6 +365,21 @@ public class ProductController {
                 .sortOrder(category.getSortOrder())
                 .createdAt(category.getCreatedAt())
                 .updatedAt(category.getUpdatedAt())
+                .build();
+    }
+
+    private ProductOptionDTO convertOptionToDTO(com.example.food.model.ProductOption option) {
+        return ProductOptionDTO.builder()
+                .optionId(option.getOptionId())
+                .productId(option.getProductId())
+                .optionName(option.getOptionName())
+                .optionType(option.getOptionType().toString())
+                .price(option.getPrice())
+                .isRequired(option.getIsRequired())
+                .isActive(option.getIsActive())
+                .maxSelections(option.getMaxSelections())
+                .createdAt(option.getCreatedAt())
+                .updatedAt(option.getUpdatedAt())
                 .build();
     }
 

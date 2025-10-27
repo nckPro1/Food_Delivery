@@ -22,3 +22,5 @@ public interface CouponUsageRepository extends JpaRepository<CouponUsage, Long> 
 
     boolean existsByCouponIdAndUserId(Long couponId, Long userId);
 }
+
+

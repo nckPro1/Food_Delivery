@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Data
@@ -25,6 +26,15 @@ public class ProductDTO {
     private Boolean isFeatured;
     private Integer preparationTime;
     private CategoryDTO category;
+    private List<ProductOptionDTO> options; // Add options field
+
+    // Sale fields
+    private BigDecimal salePrice;
+    private Integer salePercentage;
+    private Boolean isOnSale;
+    private String saleStartDate;
+    private String saleEndDate;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

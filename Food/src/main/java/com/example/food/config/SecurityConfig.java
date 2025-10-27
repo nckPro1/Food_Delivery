@@ -70,6 +70,8 @@ public class SecurityConfig {
                         // Public endpoints
                         .requestMatchers("/api/auth/**", "/oauth2/**", "/login/oauth2/**").permitAll()
                         .requestMatchers("/api/products/**").permitAll() // Allow public access to products and categories
+                        .requestMatchers("/api/coupons/validate/**").permitAll() // Allow coupon validation
+                        .requestMatchers("/api/coupons/active").permitAll() // Allow active coupons
                         .requestMatchers(HttpMethod.POST, "/api/orders/calculate-shipping").permitAll() // Allow shipping calculation
                         .requestMatchers(HttpMethod.POST, "/api/orders").authenticated() // Require authentication for order creation
                         .requestMatchers("/api/orders/test-auth").permitAll() // Allow test auth endpoint

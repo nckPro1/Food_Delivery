@@ -40,7 +40,7 @@ public class AdminCategoryController {
         try {
             List<Category> categories = productService.getAllActiveCategories();
             model.addAttribute("categories", categories);
-            model.addAttribute("pageTitle", "Quản lý danh mục");
+            model.addAttribute("pageTitle", "Danh mục - Danh sách");
             return "admin/categories/list";
         } catch (Exception e) {
             log.error("Error loading categories page: ", e);
@@ -56,7 +56,7 @@ public class AdminCategoryController {
     public String createCategoryPage(Model model) {
         try {
             model.addAttribute("category", new Category());
-            model.addAttribute("pageTitle", "Tạo danh mục mới");
+            model.addAttribute("pageTitle", "Danh mục - Tạo mới");
             return "admin/categories/create";
         } catch (Exception e) {
             log.error("Error loading create category page: ", e);
@@ -75,7 +75,7 @@ public class AdminCategoryController {
                     .orElseThrow(() -> new IllegalArgumentException("Danh mục không tồn tại"));
 
             model.addAttribute("category", category);
-            model.addAttribute("pageTitle", "Chỉnh sửa danh mục: " + category.getCategoryName());
+            model.addAttribute("pageTitle", "Danh mục - Chỉnh sửa");
 
             return "admin/categories/edit";
         } catch (Exception e) {
@@ -175,7 +175,7 @@ public class AdminCategoryController {
                 Category category = productService.getCategoryById(categoryId)
                         .orElseThrow(() -> new IllegalArgumentException("Danh mục không tồn tại"));
                 model.addAttribute("category", category);
-                model.addAttribute("pageTitle", "Chỉnh sửa danh mục: " + category.getCategoryName());
+                model.addAttribute("pageTitle", "Danh mục - Chỉnh sửa");
             } catch (Exception ex) {
                 log.error("Error loading category for error page: ", ex);
             }

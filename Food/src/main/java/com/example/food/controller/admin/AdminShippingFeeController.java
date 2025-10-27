@@ -1,150 +1,81 @@
 package com.example.food.controller.admin;
 
-import com.example.food.dto.ApiResponse;
-import com.example.food.dto.ShippingFeeDTO;
-import com.example.food.service.ShippingFeeService;
+import com.example.food.dto.ShippingFeeSettingsDTO;
+import com.example.food.service.ShippingFeeSettingsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.List;
+import java.math.BigDecimal;
+import java.util.Optional;
 
-@RestController
-@RequestMapping("/admin/shipping-fees")
+@Controller
+@RequestMapping("/admin")
 @RequiredArgsConstructor
 @Slf4j
 public class AdminShippingFeeController {
 
-    private final ShippingFeeService shippingFeeService;
+    private final ShippingFeeSettingsService shippingFeeSettingsService;
 
     /**
-     * Lấy tất cả shipping fees
+     * Trang danh sách phí ship
      */
-    @GetMapping
-    public ResponseEntity<ApiResponse<List<ShippingFeeDTO>>> getAllShippingFees() {
-        try {
-            List<ShippingFeeDTO> fees = shippingFeeService.getAllShippingFees();
-            return ResponseEntity.ok(ApiResponse.<List<ShippingFeeDTO>>builder()
-                    .success(true)
-                    .message("Lấy danh sách phí ship thành công")
-                    .data(fees)
-                    .build());
-        } catch (Exception e) {
-            log.error("Error getting shipping fees: ", e);
-            return ResponseEntity.badRequest().body(ApiResponse.<List<ShippingFeeDTO>>builder()
-                    .success(false)
-                    .message("Lỗi khi lấy danh sách phí ship: " + e.getMessage())
-                    .build());
-        }
+    @GetMapping("/shipping-fees/list")
+    public String shippingFeesList(Model model) {
+        log.info("Loading shipping fees list page");
+        
+        // Lấy cài đặt phí ship hiện tại
+        Optional<ShippingFeeSettingsDTO> shippingSettings = shippingFeeSettingsService.getCurrentSettings();
+        model.addAttribute("shippingSettings", shippingSettings.orElse(new ShippingFeeSettingsDTO()));
+        model.addAttribute("pageTitle", "Phí ship - Danh sách");
+        
+        return "admin/shipping-fees/list";
     }
 
     /**
-     * Lấy shipping fee theo ID
+     * Trang chỉnh sửa phí ship
      */
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<ShippingFeeDTO>> getShippingFeeById(@PathVariable Long id) {
-        try {
-            return shippingFeeService.getShippingFeeById(id)
-                    .map(fee -> ResponseEntity.ok(ApiResponse.<ShippingFeeDTO>builder()
-                            .success(true)
-                            .message("Lấy thông tin phí ship thành công")
-                            .data(fee)
-                            .build()))
-                    .orElse(ResponseEntity.badRequest().body(ApiResponse.<ShippingFeeDTO>builder()
-                            .success(false)
-                            .message("Không tìm thấy phí ship với ID: " + id)
-                            .build()));
-        } catch (Exception e) {
-            log.error("Error getting shipping fee by ID: ", e);
-            return ResponseEntity.badRequest().body(ApiResponse.<ShippingFeeDTO>builder()
-                    .success(false)
-                    .message("Lỗi khi lấy thông tin phí ship: " + e.getMessage())
-                    .build());
-        }
+    @GetMapping("/shipping-fees/edit")
+    public String editShippingFeesForm(Model model) {
+        log.info("Loading edit shipping fees form");
+        
+        // Lấy cài đặt phí ship hiện tại
+        Optional<ShippingFeeSettingsDTO> shippingSettings = shippingFeeSettingsService.getCurrentSettings();
+        model.addAttribute("shippingSettings", shippingSettings.orElse(new ShippingFeeSettingsDTO()));
+        model.addAttribute("pageTitle", "Phí ship - Chỉnh sửa");
+        
+        return "admin/shipping-fees/form";
     }
 
     /**
-     * Tạo shipping fee mới
+     * Cập nhật cài đặt phí ship
      */
-    @PostMapping
-    public ResponseEntity<ApiResponse<ShippingFeeDTO>> createShippingFee(@RequestBody ShippingFeeDTO shippingFeeDTO) {
-        try {
-            ShippingFeeDTO created = shippingFeeService.createShippingFee(shippingFeeDTO);
-            return ResponseEntity.ok(ApiResponse.<ShippingFeeDTO>builder()
-                    .success(true)
-                    .message("Tạo phí ship thành công")
-                    .data(created)
-                    .build());
-        } catch (Exception e) {
-            log.error("Error creating shipping fee: ", e);
-            return ResponseEntity.badRequest().body(ApiResponse.<ShippingFeeDTO>builder()
-                    .success(false)
-                    .message("Lỗi khi tạo phí ship: " + e.getMessage())
-                    .build());
-        }
-    }
+    @PostMapping("/shipping-fees/update")
+    public String updateShippingSettings(
+            @RequestParam BigDecimal fixedShippingFee,
+            @RequestParam BigDecimal freeShippingThreshold,
+            RedirectAttributes redirectAttributes) {
 
-    /**
-     * Cập nhật shipping fee
-     */
-    @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<ShippingFeeDTO>> updateShippingFee(
-            @PathVariable Long id, 
-            @RequestBody ShippingFeeDTO shippingFeeDTO) {
         try {
-            ShippingFeeDTO updated = shippingFeeService.updateShippingFee(id, shippingFeeDTO);
-            return ResponseEntity.ok(ApiResponse.<ShippingFeeDTO>builder()
-                    .success(true)
-                    .message("Cập nhật phí ship thành công")
-                    .data(updated)
-                    .build());
-        } catch (Exception e) {
-            log.error("Error updating shipping fee: ", e);
-            return ResponseEntity.badRequest().body(ApiResponse.<ShippingFeeDTO>builder()
-                    .success(false)
-                    .message("Lỗi khi cập nhật phí ship: " + e.getMessage())
-                    .build());
-        }
-    }
+            log.info("Updating shipping settings: fixed={}, threshold={}", fixedShippingFee, freeShippingThreshold);
 
-    /**
-     * Xóa shipping fee (soft delete)
-     */
-    @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteShippingFee(@PathVariable Long id) {
-        try {
-            shippingFeeService.deleteShippingFee(id);
-            return ResponseEntity.ok(ApiResponse.<Void>builder()
-                    .success(true)
-                    .message("Xóa phí ship thành công")
-                    .build());
-        } catch (Exception e) {
-            log.error("Error deleting shipping fee: ", e);
-            return ResponseEntity.badRequest().body(ApiResponse.<Void>builder()
-                    .success(false)
-                    .message("Lỗi khi xóa phí ship: " + e.getMessage())
-                    .build());
-        }
-    }
+            ShippingFeeSettingsDTO settingsDTO = ShippingFeeSettingsDTO.builder()
+                    .fixedShippingFee(fixedShippingFee)
+                    .freeShippingThreshold(freeShippingThreshold)
+                    .enabled(true)
+                    .build();
 
-    /**
-     * Đặt làm shipping fee mặc định
-     */
-    @PostMapping("/{id}/set-default")
-    public ResponseEntity<ApiResponse<Void>> setDefaultShippingFee(@PathVariable Long id) {
-        try {
-            shippingFeeService.setDefaultShippingFee(id);
-            return ResponseEntity.ok(ApiResponse.<Void>builder()
-                    .success(true)
-                    .message("Đặt phí ship mặc định thành công")
-                    .build());
+            shippingFeeSettingsService.updateSettings(settingsDTO);
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật cài đặt phí ship thành công!");
+
         } catch (Exception e) {
-            log.error("Error setting default shipping fee: ", e);
-            return ResponseEntity.badRequest().body(ApiResponse.<Void>builder()
-                    .success(false)
-                    .message("Lỗi khi đặt phí ship mặc định: " + e.getMessage())
-                    .build());
+            log.error("Error updating shipping settings: {}", e.getMessage(), e);
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi cập nhật cài đặt phí ship: " + e.getMessage());
         }
+
+        return "redirect:/admin/shipping-fees/list";
     }
 }

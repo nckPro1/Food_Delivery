@@ -28,6 +28,15 @@ public class ProductService {
     // ===============================
 
     /**
+     * Lấy tất cả sản phẩm (không phân trang)
+     */
+    @Transactional(readOnly = true)
+    public List<Product> getAllProducts() {
+        log.info("Fetching all products");
+        return productRepository.findAll();
+    }
+
+    /**
      * Lấy tất cả sản phẩm có sẵn với pagination
      */
     @Transactional(readOnly = true)

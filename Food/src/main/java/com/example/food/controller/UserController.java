@@ -66,18 +66,6 @@ public class UserController {
             if (userDTO.getAvatarUrl() != null) {
                 user.setAvatarUrl(userDTO.getAvatarUrl());
             }
-            if (userDTO.getUserCity() != null) {
-                user.setUserCity(userDTO.getUserCity());
-            }
-            if (userDTO.getUserDistrict() != null) {
-                user.setUserDistrict(userDTO.getUserDistrict());
-            }
-            if (userDTO.getUserWard() != null) {
-                user.setUserWard(userDTO.getUserWard());
-            }
-            if (userDTO.getUserStreet() != null) {
-                user.setUserStreet(userDTO.getUserStreet());
-            }
 
             // Save updated user
             User updatedUser = userService.saveUser(user);

@@ -28,10 +28,10 @@ public class OrderService {
     private final PaymentRepository paymentRepository;
     private final ProductRepository productRepository;
     private final ProductOptionRepository productOptionRepository;
+    private final CouponService couponService;
+    private final CouponRepository couponRepository;
     private final UserRepository userRepository;
-    private final NotificationService notificationService;
-    private final ShippingFeeService shippingFeeService;
-    private final EnhancedShippingFeeService enhancedShippingFeeService;
+    private final ShippingFeeSettingsService shippingFeeSettingsService;
 
     // ===============================
     // ORDER MANAGEMENT
@@ -60,6 +60,24 @@ public class OrderService {
             deliveryAddress = user.getAddress();
         }
 
+        // Process coupon if provided
+        BigDecimal couponDiscount = BigDecimal.ZERO;
+        if (request.getCouponCode() != null && !request.getCouponCode().trim().isEmpty()) {
+            try {
+                // Calculate total amount first to validate coupon
+                BigDecimal tempTotal = calculateTotalAmount(request.getOrderItems());
+                Coupon coupon = couponRepository.findValidCoupon(request.getCouponCode(), LocalDateTime.now())
+                        .orElseThrow(() -> new IllegalArgumentException("Invalid or expired coupon"));
+
+                // Calculate actual discount using the coupon's calculateDiscount method
+                couponDiscount = coupon.calculateDiscount(tempTotal);
+
+                log.info("Applied coupon: {}, discount: {}", request.getCouponCode(), couponDiscount);
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Invalid coupon: " + e.getMessage());
+            }
+        }
+
         // Create order
         Order order = Order.builder()
                 .orderNumber(generateOrderNumber())
@@ -67,12 +85,9 @@ public class OrderService {
                 .orderStatus(Order.OrderStatus.PENDING)
                 .paymentStatus(Order.PaymentStatus.PENDING)
                 .paymentMethod(Order.PaymentMethod.valueOf(request.getPaymentMethod().toUpperCase()))
-                .deliveryAddress(deliveryAddress) // Use delivery address from request or user's address
+                .deliveryAddress(deliveryAddress)
                 .deliveryNotes(request.getDeliveryNotes())
-                .deliveryCity(request.getDeliveryCity())
-                .deliveryDistrict(request.getDeliveryDistrict())
-                .deliveryWard(request.getDeliveryWard())
-                .deliveryStreet(request.getDeliveryStreet())
+                .couponDiscount(couponDiscount)
                 .build();
 
         // Calculate order items and total
@@ -87,6 +102,7 @@ public class OrderService {
                             .product(product)
                             .quantity(itemRequest.getQuantity())
                             .unitPrice(product.getPrice())
+                            .salePrice(product.getCurrentPrice())
                             .specialInstructions(itemRequest.getSpecialInstructions())
                             .build();
 
@@ -123,40 +139,26 @@ public class OrderService {
 
         order.setTotalAmount(totalAmount);
 
-        // Calculate shipping fee
-        BigDecimal shippingFee;
-        Integer estimatedDuration = 30; // Default 30 minutes
-        
-        if (request.getDeliveryCity() != null && request.getDeliveryDistrict() != null) {
-            // Use area-based calculation
-            ShippingCalculationResponse shippingResponse = enhancedShippingFeeService
-                .calculateShippingFee(totalAmount, request.getDeliveryCity(), request.getDeliveryDistrict());
-            
-            shippingFee = shippingResponse.getShippingFee();
-            estimatedDuration = shippingResponse.getEstimatedDurationMinutes();
-            
-        } else {
-            // Fallback to original calculation
-            shippingFee = shippingFeeService.calculateShippingFee(totalAmount);
-        }
-        
+        // Calculate shipping fee using ShippingFeeSettingsService
+        BigDecimal shippingFee = shippingFeeSettingsService.calculateShippingFee(totalAmount);
         order.setShippingFee(shippingFee);
 
         // Calculate final amount
-        order.calculateFinalAmount();
+        BigDecimal finalAmount = totalAmount.add(shippingFee).subtract(couponDiscount);
+        order.setFinalAmount(finalAmount);
 
         // Set estimated delivery time
-        order.setEstimatedDeliveryTime(LocalDateTime.now().plusMinutes(estimatedDuration));
+        order.setEstimatedDeliveryTime(LocalDateTime.now().plusMinutes(30));
 
         // Save order
         Order savedOrder = orderRepository.save(order);
-        
+
         // Ensure finalAmount is calculated after save
         if (savedOrder.getFinalAmount() == null) {
             savedOrder.calculateFinalAmount();
             savedOrder = orderRepository.save(savedOrder);
         }
-        
+
         // Create final reference for lambda
         final Order finalSavedOrder = savedOrder;
 
@@ -185,11 +187,8 @@ public class OrderService {
 
         paymentRepository.save(payment);
 
-        // Convert to DTO for notification
+        // Convert to DTO for response
         OrderDTO orderDTO = convertToDTO(finalSavedOrder);
-
-        // Send notification to admin
-        notificationService.notifyNewOrder(orderDTO);
 
         log.info("Order created successfully: {}", finalSavedOrder.getOrderNumber());
         return orderDTO;
@@ -297,7 +296,7 @@ public class OrderService {
     public long getOrderCountByDateRange(LocalDate startDate, LocalDate endDate) {
         LocalDateTime startDateTime = startDate.atStartOfDay();
         LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
-        
+
         return orderRepository.countByCreatedAtBetween(startDateTime, endDateTime);
     }
 
@@ -307,10 +306,10 @@ public class OrderService {
     public double getRevenueByDateRange(LocalDate startDate, LocalDate endDate) {
         LocalDateTime startDateTime = startDate.atStartOfDay();
         LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
-        
+
         List<Order> orders = orderRepository.findByCreatedAtBetweenAndOrderStatus(
-            startDateTime, endDateTime, Order.OrderStatus.DONE);
-        
+                startDateTime, endDateTime, Order.OrderStatus.DONE);
+
         return orders.stream()
                 .mapToDouble(order -> order.getFinalAmount().doubleValue())
                 .sum();
@@ -322,14 +321,14 @@ public class OrderService {
     public Map<Order.OrderStatus, Long> getOrderCountByStatusInDateRange(LocalDate startDate, LocalDate endDate) {
         LocalDateTime startDateTime = startDate.atStartOfDay();
         LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
-        
+
         Map<Order.OrderStatus, Long> statusCounts = new java.util.HashMap<>();
-        
+
         for (Order.OrderStatus status : Order.OrderStatus.values()) {
             long count = orderRepository.countByCreatedAtBetweenAndOrderStatus(startDateTime, endDateTime, status);
             statusCounts.put(status, count);
         }
-        
+
         return statusCounts;
     }
 
@@ -353,6 +352,7 @@ public class OrderService {
                 .totalAmount(order.getTotalAmount())
                 .shippingFee(order.getShippingFee())
                 .discountAmount(order.getDiscountAmount())
+                .couponDiscount(order.getCouponDiscount())
                 .finalAmount(order.getFinalAmount())
                 .paymentStatus(order.getPaymentStatus())
                 .paymentMethod(order.getPaymentMethod())
@@ -378,6 +378,7 @@ public class OrderService {
                 .productImageUrl(orderItem.getProduct().getImageUrl())
                 .quantity(orderItem.getQuantity())
                 .unitPrice(orderItem.getUnitPrice())
+                .salePrice(orderItem.getSalePrice())
                 .totalPrice(orderItem.getTotalPrice())
                 .specialInstructions(orderItem.getSpecialInstructions())
                 .orderItemOptions(orderItem.getOrderItemOptions() != null ?
@@ -397,5 +398,31 @@ public class OrderService {
                 .optionType(option.getProductOption().getOptionType().toString())
                 .extraPrice(option.getExtraPrice())
                 .build();
+    }
+
+    private BigDecimal calculateTotalAmount(List<CreateOrderRequest.OrderItemRequest> orderItems) {
+        return orderItems.stream()
+                .map(itemRequest -> {
+                    Product product = productRepository.findById(itemRequest.getProductId())
+                            .orElseThrow(() -> new IllegalArgumentException("Product not found: " + itemRequest.getProductId()));
+
+                    BigDecimal itemTotal = product.getCurrentPrice().multiply(BigDecimal.valueOf(itemRequest.getQuantity()));
+
+                    // Add option prices
+                    if (itemRequest.getSelectedOptionIds() != null) {
+                        BigDecimal optionsPrice = itemRequest.getSelectedOptionIds().stream()
+                                .map(optionId -> {
+                                    ProductOption option = productOptionRepository.findById(optionId)
+                                            .orElseThrow(() -> new IllegalArgumentException("Product option not found: " + optionId));
+                                    return option.getPrice();
+                                })
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                        itemTotal = itemTotal.add(optionsPrice.multiply(BigDecimal.valueOf(itemRequest.getQuantity())));
+                    }
+
+                    return itemTotal;
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateSaleRequest {
+    private Long saleId; // For update operations
     private Long productId;
     private String saleName;
     private String saleDescription;
