@@ -264,7 +264,7 @@
                         class="text-muted">Chưa phân loại</span>
                 </td>
                 <td>
-                  <strong th:text="${product.price} + ' VNĐ'">Price</strong>
+                  <strong th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></strong>
                 </td>
                 <td>
                   <span th:if="${product.isAvailable}" class="badge bg-success">

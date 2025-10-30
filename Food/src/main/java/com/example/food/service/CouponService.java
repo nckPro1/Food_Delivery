@@ -70,8 +70,8 @@ public class CouponService {
                 .orElseThrow(() -> new RuntimeException("Coupon not found"));
 
         // Check if coupon code already exists (excluding current coupon)
-        if (!coupon.getCouponCode().equals(request.getCouponCode()) && 
-            couponRepository.existsByCouponCode(request.getCouponCode())) {
+        if (!coupon.getCouponCode().equals(request.getCouponCode()) &&
+                couponRepository.existsByCouponCode(request.getCouponCode())) {
             throw new RuntimeException("Coupon code already exists");
         }
 
@@ -110,13 +110,61 @@ public class CouponService {
 
     public CouponDTO validateCoupon(String couponCode, BigDecimal orderAmount) {
         Coupon coupon = couponRepository.findValidCoupon(couponCode, LocalDateTime.now())
-                .orElseThrow(() -> new RuntimeException("Invalid or expired coupon"));
-
-        if (!coupon.canBeUsedForOrder(orderAmount)) {
-            throw new RuntimeException("Coupon cannot be used for this order amount");
+                .orElse(null);
+        if (coupon == null) {
+            return CouponDTO.builder()
+                    .canUse(false)
+                    .message("Mã giảm giá không hợp lệ hoặc đã hết hạn.")
+                    .build();
         }
-
-        return convertToDTO(coupon);
+        if (orderAmount == null || coupon.getMinOrderAmount() == null) {
+            return CouponDTO.builder()
+                    .canUse(false)
+                    .message("Chưa truyền tổng tiền đơn hàng hợp lệ.")
+                    .build();
+        }
+        if (orderAmount.compareTo(coupon.getMinOrderAmount()) < 0) {
+            return CouponDTO.builder()
+                    .couponId(coupon.getCouponId())
+                    .couponCode(coupon.getCouponCode())
+                    .couponName(coupon.getCouponName())
+                    .description(coupon.getDescription())
+                    .discountType(coupon.getDiscountType() != null ? coupon.getDiscountType().name() : null)
+                    .discountValue(coupon.getDiscountValue())
+                    .minOrderAmount(coupon.getMinOrderAmount())
+                    .maxDiscountAmount(coupon.getMaxDiscountAmount())
+                    .usageLimit(coupon.getUsageLimit())
+                    .usedCount(coupon.getUsedCount())
+                    .startDate(coupon.getStartDate())
+                    .endDate(coupon.getEndDate())
+                    .isActive(coupon.getIsActive())
+                    .canUse(false)
+                    .message("Đơn hàng chưa đủ điều kiện. Tổng tiền từ " + coupon.getMinOrderAmount() + " mới áp dụng được coupon này.")
+                    .build();
+        }
+        if (!coupon.canBeUsedForOrder(orderAmount)) {
+            return CouponDTO.builder()
+                    .couponId(coupon.getCouponId())
+                    .couponCode(coupon.getCouponCode())
+                    .couponName(coupon.getCouponName())
+                    .description(coupon.getDescription())
+                    .discountType(coupon.getDiscountType() != null ? coupon.getDiscountType().name() : null)
+                    .discountValue(coupon.getDiscountValue())
+                    .minOrderAmount(coupon.getMinOrderAmount())
+                    .maxDiscountAmount(coupon.getMaxDiscountAmount())
+                    .usageLimit(coupon.getUsageLimit())
+                    .usedCount(coupon.getUsedCount())
+                    .startDate(coupon.getStartDate())
+                    .endDate(coupon.getEndDate())
+                    .isActive(coupon.getIsActive())
+                    .canUse(false)
+                    .message("Coupon không hợp lệ hoặc đã vượt quá số lượt dùng.")
+                    .build();
+        }
+        CouponDTO dto = convertToDTO(coupon);
+        dto.setCanUse(true);
+        dto.setMessage("Áp dụng thành công!");
+        return dto;
     }
 
     @Transactional
@@ -126,6 +174,19 @@ public class CouponService {
 
         coupon.setUsedCount(coupon.getUsedCount() + 1);
         couponRepository.save(coupon);
+    }
+
+    @Transactional
+    public int deactivateExpiredCoupons() {
+        LocalDateTime now = LocalDateTime.now();
+        List<Coupon> expired = couponRepository.findAll().stream()
+                .filter(c -> c.getIsActive() && c.getEndDate() != null && now.isAfter(c.getEndDate()))
+                .collect(java.util.stream.Collectors.toList());
+        for (Coupon c : expired) {
+            c.setIsActive(false);
+        }
+        couponRepository.saveAll(expired);
+        return expired.size();
     }
 
     private CouponDTO convertToDTO(Coupon coupon) {

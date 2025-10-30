@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -22,21 +23,11 @@ public class ShippingFeeSettings {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "same_district_fee", nullable = false)
-    @Builder.Default
-    private Integer sameDistrictFee = 10000;
+    @Column(name = "fixed_shipping_fee", nullable = false, precision = 10, scale = 2)
+    private BigDecimal fixedShippingFee = BigDecimal.valueOf(15000); // 15,000 VNĐ
 
-    @Column(name = "different_district_fee", nullable = false)
-    @Builder.Default
-    private Integer differentDistrictFee = 30000;
-
-    @Column(name = "outside_city_fee", nullable = false)
-    @Builder.Default
-    private Integer outsideCityFee = 0;
-
-    @Column(name = "free_shipping_threshold", nullable = false)
-    @Builder.Default
-    private Integer freeShippingThreshold = 200000;
+    @Column(name = "free_shipping_threshold", nullable = false, precision = 10, scale = 2)
+    private BigDecimal freeShippingThreshold = BigDecimal.valueOf(200000); // 200,000 VNĐ
 
     @Column(name = "enabled", nullable = false)
     @Builder.Default
@@ -49,5 +40,21 @@ public class ShippingFeeSettings {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-}
 
+    /**
+     * Tính phí ship dựa trên tổng đơn hàng
+     */
+    public BigDecimal calculateShippingFee(BigDecimal orderAmount) {
+        if (!enabled) {
+            return BigDecimal.ZERO;
+        }
+
+        // Nếu đơn hàng >= ngưỡng miễn phí ship thì free
+        if (orderAmount.compareTo(freeShippingThreshold) >= 0) {
+            return BigDecimal.ZERO;
+        }
+
+        // Ngược lại tính phí ship cố định
+        return fixedShippingFee;
+    }
+}

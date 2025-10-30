@@ -159,7 +159,7 @@ public class AdminOrderController {
             case "DONE":
                 return Order.OrderStatus.DONE;
             case "CANCELLED":
-                return Order.OrderStatus.DONE; // Cancelled orders are marked as DONE with note
+                return Order.OrderStatus.CANCELLED; // CANCELLED is a separate status
             default:
                 throw new IllegalArgumentException("Invalid order status: " + status);
         }

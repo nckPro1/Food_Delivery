@@ -13,72 +13,86 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional
 public class StoreSettingsService {
 
     private final StoreSettingsRepository storeSettingsRepository;
 
-    public Optional<StoreSettingsDTO> getActiveStoreSettings() {
-        return storeSettingsRepository.findByIsActiveTrue()
+    /**
+     * Lấy thông tin cửa hàng hiện tại
+     */
+    @Transactional(readOnly = true)
+    public Optional<StoreSettingsDTO> getCurrentSettings() {
+        log.info("Fetching current store settings");
+        return storeSettingsRepository.findByEnabledTrue()
                 .map(this::convertToDTO);
     }
 
-    public StoreSettingsDTO getDefaultStoreSettings() {
-        return storeSettingsRepository.findByIsActiveTrue()
-                .map(this::convertToDTO)
-                .orElse(getDefaultSettings());
-    }
-
+    /**
+     * Cập nhật thông tin cửa hàng
+     */
     @Transactional
-    public StoreSettingsDTO updateStoreSettings(StoreSettingsDTO dto) {
-        StoreSettings settings = storeSettingsRepository.findByIsActiveTrue()
-                .orElse(StoreSettings.builder().build());
+    public StoreSettingsDTO updateSettings(StoreSettingsDTO settingsDTO) {
+        log.info("Updating store settings");
 
-        // Update fields
-        settings.setStoreName(dto.getStoreName());
-        settings.setStorePhone(dto.getStorePhone());
-        settings.setStoreEmail(dto.getStoreEmail());
-        settings.setStoreCity(dto.getStoreCity());
-        settings.setStoreDistrict(dto.getStoreDistrict());
-        settings.setStoreWard(dto.getStoreWard());
-        settings.setStoreStreet(dto.getStoreStreet());
-        settings.setStoreDescription(dto.getStoreDescription());
-        settings.setIsActive(true);
+        Optional<StoreSettings> existingSettings = storeSettingsRepository.findByEnabledTrue();
+
+        StoreSettings settings;
+        if (existingSettings.isPresent()) {
+            // Cập nhật cài đặt hiện tại
+            settings = existingSettings.get();
+            settings.setStoreName(settingsDTO.getStoreName());
+            settings.setPhoneNumber(settingsDTO.getPhoneNumber());
+            settings.setEmail(settingsDTO.getEmail());
+            settings.setAddress(settingsDTO.getAddress());
+            settings.setDescription(settingsDTO.getDescription());
+        } else {
+            // Tạo cài đặt mới
+            settings = StoreSettings.builder()
+                    .storeName(settingsDTO.getStoreName())
+                    .phoneNumber(settingsDTO.getPhoneNumber())
+                    .email(settingsDTO.getEmail())
+                    .address(settingsDTO.getAddress())
+                    .description(settingsDTO.getDescription())
+                    .enabled(true)
+                    .build();
+        }
 
         StoreSettings savedSettings = storeSettingsRepository.save(settings);
-        log.info("Store settings updated: {}", savedSettings.getSettingId());
-
         return convertToDTO(savedSettings);
     }
 
+    /**
+     * Lấy thông tin cửa hàng cho API
+     */
+    @Transactional(readOnly = true)
+    public StoreSettingsDTO getStoreInfo() {
+        log.info("Fetching store info for API");
+        return storeSettingsRepository.findByEnabledTrue()
+                .map(this::convertToDTO)
+                .orElse(StoreSettingsDTO.builder()
+                        .storeName("FoodieExpress")
+                        .phoneNumber("0123456789")
+                        .email("contact@foodieexpress.com")
+                        .address("123 Đường ABC, Quận XYZ, TP.HCM")
+                        .description("Cửa hàng thức ăn nhanh uy tín")
+                        .build());
+    }
+
+    /**
+     * Chuyển đổi entity sang DTO
+     */
     private StoreSettingsDTO convertToDTO(StoreSettings settings) {
         return StoreSettingsDTO.builder()
-                .settingId(settings.getSettingId())
+                .id(settings.getId())
                 .storeName(settings.getStoreName())
-                .storePhone(settings.getStorePhone())
-                .storeEmail(settings.getStoreEmail())
-                .storeCity(settings.getStoreCity())
-                .storeDistrict(settings.getStoreDistrict())
-                .storeWard(settings.getStoreWard())
-                .storeStreet(settings.getStoreStreet())
-                .storeDescription(settings.getStoreDescription())
-                .isActive(settings.getIsActive())
+                .phoneNumber(settings.getPhoneNumber())
+                .email(settings.getEmail())
+                .address(settings.getAddress())
+                .description(settings.getDescription())
+                .enabled(settings.getEnabled())
                 .createdAt(settings.getCreatedAt())
                 .updatedAt(settings.getUpdatedAt())
                 .build();
     }
-
-    private StoreSettingsDTO getDefaultSettings() {
-        return StoreSettingsDTO.builder()
-                .storeName("Nhà hàng của tôi")
-                .storePhone("0123456789")
-                .storeEmail("info@myrestaurant.com")
-                .storeCity("ho-chi-minh")
-                .storeDistrict("quan-1")
-                .storeWard("Phường Bến Nghé")
-                .storeStreet("123 Nguyễn Huệ")
-                .storeDescription("Nhà hàng phục vụ các món ăn ngon và chất lượng")
-                .isActive(true)
-                .build();
-    }
-
 }

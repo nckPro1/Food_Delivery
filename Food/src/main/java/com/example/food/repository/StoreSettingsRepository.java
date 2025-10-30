@@ -9,8 +9,8 @@ import java.util.Optional;
 @Repository
 public interface StoreSettingsRepository extends JpaRepository<StoreSettings, Long> {
     
-    Optional<StoreSettings> findByIsActiveTrue();
-    
-    Optional<StoreSettings> findFirstByIsActiveTrueOrderByCreatedAtDesc();
+    /**
+     * Tìm cài đặt cửa hàng đang được kích hoạt
+     */
+    Optional<StoreSettings> findByEnabledTrue();
 }
-

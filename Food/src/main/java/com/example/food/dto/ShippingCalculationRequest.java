@@ -17,4 +17,8 @@ public class ShippingCalculationRequest {
     private String deliveryDistrict;
     private String deliveryWard;
     private String deliveryStreet;
+    
+    // Backward compatibility với GPS coordinates
+    private BigDecimal deliveryLatitude;
+    private BigDecimal deliveryLongitude;
 }

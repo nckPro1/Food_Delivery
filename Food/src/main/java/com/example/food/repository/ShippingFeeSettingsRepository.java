@@ -8,7 +8,9 @@ import java.util.Optional;
 
 @Repository
 public interface ShippingFeeSettingsRepository extends JpaRepository<ShippingFeeSettings, Long> {
-    
-    Optional<ShippingFeeSettings> findFirstByOrderByCreatedAtDesc();
-}
 
+    /**
+     * Tìm cài đặt phí ship đang được kích hoạt
+     */
+    Optional<ShippingFeeSettings> findByEnabledTrue();
+}

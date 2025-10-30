@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -21,37 +20,26 @@ public class StoreSettings {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "setting_id")
-    private Long settingId;
+    private Long id;
 
-    @Column(name = "store_name", nullable = false)
+    @Column(name = "store_name", nullable = false, length = 255)
+    private String storeName;
+
+    @Column(name = "phone_number", length = 20)
+    private String phoneNumber;
+
+    @Column(name = "email", length = 255)
+    private String email;
+
+    @Column(name = "address", columnDefinition = "TEXT")
+    private String address;
+
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
+    @Column(name = "enabled", nullable = false)
     @Builder.Default
-    private String storeName = "Nhà hàng của tôi";
-
-    @Column(name = "store_phone")
-    private String storePhone;
-
-    @Column(name = "store_email")
-    private String storeEmail;
-
-    @Column(name = "store_city")
-    private String storeCity;
-
-    @Column(name = "store_district")
-    private String storeDistrict;
-
-    @Column(name = "store_ward")
-    private String storeWard;
-
-    @Column(name = "store_street")
-    private String storeStreet;
-
-    @Column(name = "store_description", columnDefinition = "TEXT")
-    private String storeDescription;
-
-    @Column(name = "is_active", nullable = false)
-    @Builder.Default
-    private Boolean isActive = true;
+    private Boolean enabled = true;
 
     @CreationTimestamp
     @Column(name = "created_at")

@@ -14,6 +14,7 @@
             background-color: #f8f9fa;
             margin: 0;
             padding: 0;
+            overflow-y: auto; /* ensure vertical scroll on mobile */
         }
 
         /* Sidebar Styles */
@@ -189,11 +190,11 @@
                 transform: translateX(-100%);
                 transition: transform 0.3s ease;
             }
-            
+
             .sidebar.show {
                 transform: translateX(0);
             }
-            
+
             .main-content {
                 margin-left: 0;
             }
@@ -201,301 +202,403 @@
     </style>
 </head>
 <body>
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <div th:replace="admin/fragments/sidebar :: sidebar"></div>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div th:replace="admin/fragments/sidebar :: sidebar"></div>
 
-            <!-- Main content -->
-            <main class="col-md-9 ms-sm-auto col-lg-10 main-content">
-                <!-- Page Header -->
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h1 class="text-primary">Dashboard</h1>
-                    <div class="text-muted">
-                        <i class="fas fa-calendar-alt me-2"></i>
-                        <span id="currentDate"></span>
+        <!-- Main content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 main-content">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="text-primary">Dashboard</h1>
+                <div class="text-muted">
+                    <i class="fas fa-calendar-alt me-2"></i>
+                    <span id="currentDate"></span>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3 mb-3">
+                    <div class="stats-card">
+                        <div class="stats-icon users">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stats-number" id="totalUsers">0</div>
+                        <div class="stats-label">Tổng người dùng</div>
                     </div>
                 </div>
-
-                <!-- Stats Cards -->
-                <div class="row mb-4">
-                    <div class="col-md-3 mb-3">
-                        <div class="stats-card">
-                            <div class="stats-icon users">
-                                <i class="fas fa-users"></i>
-                            </div>
-                            <div class="stats-number" id="totalUsers">0</div>
-                            <div class="stats-label">Tổng người dùng</div>
+                <div class="col-md-3 mb-3">
+                    <div class="stats-card">
+                        <div class="stats-icon products">
+                            <i class="fas fa-pizza-slice"></i>
                         </div>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <div class="stats-card">
-                            <div class="stats-icon products">
-                                <i class="fas fa-pizza-slice"></i>
-                            </div>
-                            <div class="stats-number" id="totalProducts">0</div>
-                            <div class="stats-label">Tổng sản phẩm</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <div class="stats-card">
-                            <div class="stats-icon orders">
-                                <i class="fas fa-clipboard-list"></i>
-                            </div>
-                            <div class="stats-number" id="totalOrders">0</div>
-                            <div class="stats-label">Đơn hàng (30 ngày)</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <div class="stats-card">
-                            <div class="stats-icon revenue">
-                                <i class="fas fa-dollar-sign"></i>
-                            </div>
-                            <div class="stats-number" id="totalRevenue">0</div>
-                            <div class="stats-label">Doanh thu (30 ngày)</div>
-                        </div>
+                        <div class="stats-number" id="totalProducts">0</div>
+                        <div class="stats-label">Tổng sản phẩm</div>
                     </div>
                 </div>
-
-                <!-- Period Selector -->
-                <div class="period-selector">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Biểu đồ đơn hàng</h5>
-                        <div>
-                            <button class="period-btn active" data-period="day">Ngày</button>
-                            <button class="period-btn" data-period="week">Tuần</button>
-                            <button class="period-btn" data-period="month">Tháng</button>
+                <div class="col-md-3 mb-3">
+                    <div class="stats-card">
+                        <div class="stats-icon orders">
+                            <i class="fas fa-clipboard-list"></i>
                         </div>
+                        <div class="stats-number" id="totalOrders">0</div>
+                        <div class="stats-label">Đơn hàng (30 ngày)</div>
                     </div>
                 </div>
-
-                <!-- Charts -->
-                <div class="row">
-                    <div class="col-md-8 mb-4">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5 class="card-title mb-0">Đơn hàng theo thời gian</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="loading-spinner" id="ordersChartLoading">
-                                    <div class="spinner-border" role="status">
-                                        <span class="visually-hidden">Loading...</span>
-                                    </div>
-                                    <p class="mt-2">Đang tải dữ liệu...</p>
-                                </div>
-                                <div class="chart-container">
-                                    <canvas id="ordersChart"></canvas>
-                                </div>
-                            </div>
+                <div class="col-md-3 mb-3">
+                    <div class="stats-card">
+                        <div class="stats-icon revenue">
+                            <i class="fas fa-dollar-sign"></i>
                         </div>
+                        <div class="stats-number" id="totalRevenue">0</div>
+                        <div class="stats-label">Doanh thu (30 ngày)</div>
                     </div>
-                    <div class="col-md-4 mb-4">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5 class="card-title mb-0">Thống kê hôm nay</h5>
+                </div>
+            </div>
+
+            <!-- Period Selector -->
+            <div class="period-selector">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Biểu đồ đơn hàng</h5>
+                    <div>
+                        <button class="period-btn active" data-period="day">Ngày</button>
+                        <button class="period-btn" data-period="week">Tuần</button>
+                        <button class="period-btn" data-period="month">Tháng</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="row">
+                <div class="col-md-8 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Đơn hàng theo thời gian</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="loading-spinner" id="ordersChartLoading">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mt-2">Đang tải dữ liệu...</p>
                             </div>
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <span>Đơn hàng hôm nay:</span>
-                                    <strong id="todayOrders">0</strong>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span>Doanh thu hôm nay:</span>
-                                    <strong id="todayRevenue">0 VNĐ</strong>
-                                </div>
+                            <div class="chart-container">
+                                <canvas id="ordersChart"></canvas>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <!-- Recent Orders -->
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">Đơn hàng gần đây</h5>
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Thống kê hôm nay</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span>Đơn hàng hôm nay:</span>
+                                <strong id="todayOrders">0</strong>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>Doanh thu hôm nay:</span>
+                                <strong id="todayRevenue">0 VNĐ</strong>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
+                </div>
+            </div>
+
+            <!-- Featured Products (Popular Dishes) Management -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Món tiêu biểu (Popular Dishes)</h5>
+                    <div class="d-flex align-items-center" style="gap:8px;">
+                        <input id="searchFeaturedInput" class="form-control form-control-sm" placeholder="Tìm sản phẩm..." style="width:240px" />
+                        <button class="btn btn-sm btn-light" onclick="openSearchModal()"><i class="fas fa-plus me-1"></i>Thêm món tiêu biểu</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="featuredList" class="row g-3">
+                        <!-- Featured products will render here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search & Manage Modal -->
+            <div class="modal fade" id="featuredSearchModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Thêm/loại bỏ món tiêu biểu</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="input-group mb-3">
+                                <input type="text" class="form-control" id="featuredSearchQuery" placeholder="Nhập từ khóa sản phẩm">
+                                <button class="btn btn-primary" type="button" onclick="searchProductsForFeatured()">Tìm</button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
                                     <tr>
-                                        <th>Mã đơn hàng</th>
-                                        <th>Khách hàng</th>
-                                        <th>Trạng thái</th>
-                                        <th>Tổng tiền</th>
-                                        <th>Ngày tạo</th>
+                                        <th>Ảnh</th>
+                                        <th>Tên</th>
+                                        <th>Giá</th>
+                                        <th>Nổi bật</th>
+                                        <th>Hành động</th>
                                     </tr>
-                                </thead>
-                                <tbody id="recentOrdersTable">
-                                    <tr>
-                                        <td colspan="5" class="text-center text-muted">
-                                            <i class="fas fa-spinner fa-spin me-2"></i>
-                                            Đang tải dữ liệu...
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody id="featuredSearchResults"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
                         </div>
                     </div>
                 </div>
-            </main>
-        </div>
+            </div>
+        </main>
     </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        let ordersChart = null;
-        let currentPeriod = 'day';
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let ordersChart = null;
+    let currentPeriod = 'day';
 
-        // Initialize dashboard
-        document.addEventListener('DOMContentLoaded', function() {
-            updateCurrentDate();
-            loadDashboardStats();
-            loadOrdersChart('day');
-            setupPeriodButtons();
-        });
+    // Initialize dashboard
+    document.addEventListener('DOMContentLoaded', function() {
+        updateCurrentDate();
+        loadDashboardStats();
+        loadOrdersChart('day');
+        setupPeriodButtons();
+        loadFeaturedProducts();
+    });
 
-        function updateCurrentDate() {
-            const now = new Date();
-            const options = { 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric',
-                weekday: 'long'
-            };
-            document.getElementById('currentDate').textContent = now.toLocaleDateString('vi-VN', options);
+    function updateCurrentDate() {
+        const now = new Date();
+        const options = {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            weekday: 'long'
+        };
+        document.getElementById('currentDate').textContent = now.toLocaleDateString('vi-VN', options);
+    }
+
+    function loadDashboardStats() {
+        fetch('/admin/api/dashboard/stats')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const stats = data.data;
+                    document.getElementById('totalUsers').textContent = stats.totalUsers || 0;
+                    document.getElementById('totalProducts').textContent = stats.totalProducts || 0;
+                    document.getElementById('totalOrders').textContent = stats.totalOrders || 0;
+                    document.getElementById('totalRevenue').textContent = formatCurrency(stats.totalRevenue || 0);
+                    document.getElementById('todayOrders').textContent = stats.todayOrders || 0;
+                    document.getElementById('todayRevenue').textContent = formatCurrency(stats.todayRevenue || 0);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading dashboard stats:', error);
+            });
+    }
+
+    function loadOrdersChart(period) {
+        const loadingElement = document.getElementById('ordersChartLoading');
+        loadingElement.style.display = 'block';
+
+        fetch(`/admin/api/dashboard/orders?period=${period}`)
+            .then(response => response.json())
+            .then(data => {
+                loadingElement.style.display = 'none';
+
+                if (data.success) {
+                    updateOrdersChart(data.data);
+                } else {
+                    console.error('Error loading chart data:', data.message);
+                }
+            })
+            .catch(error => {
+                loadingElement.style.display = 'none';
+                console.error('Error loading chart data:', error);
+            });
+    }
+
+    function updateOrdersChart(data) {
+        const ctx = document.getElementById('ordersChart').getContext('2d');
+
+        // Destroy existing chart
+        if (ordersChart) {
+            ordersChart.destroy();
         }
 
-        function loadDashboardStats() {
-            fetch('/admin/api/dashboard/stats')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        const stats = data.data;
-                        document.getElementById('totalUsers').textContent = stats.totalUsers || 0;
-                        document.getElementById('totalProducts').textContent = stats.totalProducts || 0;
-                        document.getElementById('totalOrders').textContent = stats.totalOrders || 0;
-                        document.getElementById('totalRevenue').textContent = formatCurrency(stats.totalRevenue || 0);
-                        document.getElementById('todayOrders').textContent = stats.todayOrders || 0;
-                        document.getElementById('todayRevenue').textContent = formatCurrency(stats.todayRevenue || 0);
+        ordersChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.labels,
+                datasets: [
+                    {
+                        label: 'Số đơn hàng',
+                        data: data.orderCounts,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Doanh thu (VNĐ)',
+                        data: data.revenues,
+                        borderColor: '#f093fb',
+                        backgroundColor: 'rgba(240, 147, 251, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        yAxisID: 'y1'
                     }
-                })
-                .catch(error => {
-                    console.error('Error loading dashboard stats:', error);
-                });
-        }
-
-        function loadOrdersChart(period) {
-            const loadingElement = document.getElementById('ordersChartLoading');
-            loadingElement.style.display = 'block';
-
-            fetch(`/admin/api/dashboard/orders?period=${period}`)
-                .then(response => response.json())
-                .then(data => {
-                    loadingElement.style.display = 'none';
-                    
-                    if (data.success) {
-                        updateOrdersChart(data.data);
-                    } else {
-                        console.error('Error loading chart data:', data.message);
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
                     }
-                })
-                .catch(error => {
-                    loadingElement.style.display = 'none';
-                    console.error('Error loading chart data:', error);
-                });
-        }
-
-        function updateOrdersChart(data) {
-            const ctx = document.getElementById('ordersChart').getContext('2d');
-            
-            // Destroy existing chart
-            if (ordersChart) {
-                ordersChart.destroy();
-            }
-
-            ordersChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: data.labels,
-                    datasets: [
-                        {
-                            label: 'Số đơn hàng',
-                            data: data.orderCounts,
-                            borderColor: '#667eea',
-                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                            tension: 0.4,
-                            fill: true
-                        },
-                        {
-                            label: 'Doanh thu (VNĐ)',
-                            data: data.revenues,
-                            borderColor: '#f093fb',
-                            backgroundColor: 'rgba(240, 147, 251, 0.1)',
-                            tension: 0.4,
-                            fill: true,
-                            yAxisID: 'y1'
-                        }
-                    ]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'top',
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Số đơn hàng'
                         }
                     },
-                    scales: {
-                        y: {
-                            type: 'linear',
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
                             display: true,
-                            position: 'left',
-                            title: {
-                                display: true,
-                                text: 'Số đơn hàng'
-                            }
+                            text: 'Doanh thu (VNĐ)'
                         },
-                        y1: {
-                            type: 'linear',
-                            display: true,
-                            position: 'right',
-                            title: {
-                                display: true,
-                                text: 'Doanh thu (VNĐ)'
-                            },
-                            grid: {
-                                drawOnChartArea: false,
-                            },
-                        }
+                        grid: {
+                            drawOnChartArea: false,
+                        },
                     }
                 }
-            });
-        }
+            }
+        });
+    }
 
-        function setupPeriodButtons() {
-            const buttons = document.querySelectorAll('.period-btn');
-            buttons.forEach(button => {
-                button.addEventListener('click', function() {
-                    // Remove active class from all buttons
-                    buttons.forEach(btn => btn.classList.remove('active'));
-                    
-                    // Add active class to clicked button
-                    this.classList.add('active');
-                    
-                    // Update chart
-                    const period = this.dataset.period;
-                    currentPeriod = period;
-                    loadOrdersChart(period);
+    function setupPeriodButtons() {
+        const buttons = document.querySelectorAll('.period-btn');
+        buttons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Remove active class from all buttons
+                buttons.forEach(btn => btn.classList.remove('active'));
+
+                // Add active class to clicked button
+                this.classList.add('active');
+
+                // Update chart
+                const period = this.dataset.period;
+                currentPeriod = period;
+                loadOrdersChart(period);
+            });
+        });
+    }
+
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND'
+        }).format(amount);
+    }
+
+    // ===== Featured Products =====
+    function loadFeaturedProducts() {
+        fetch('/api/products/featured')
+            .then(r => r.json())
+            .then(res => {
+                if (!res.success) return;
+                const list = document.getElementById('featuredList');
+                list.innerHTML = '';
+                (res.data || []).forEach(p => {
+                    const col = document.createElement('div');
+                    col.className = 'col-12 col-sm-6 col-md-4 col-lg-3';
+                    col.innerHTML = `
+                          <div class="card h-100">
+                            <img src="${p.imageUrl || '/images/default-product.png'}" class="card-img-top" style="height:160px; object-fit:cover;" onerror="this.src='/images/default-product.png'"/>
+                            <div class="card-body d-flex flex-column">
+                              <h6 class="card-title">${p.name}</h6>
+                              <div class="mt-auto d-flex justify-content-between align-items-center">
+                                <span class="text-primary fw-bold">${formatCurrency(p.price || 0)}</span>
+                                <button class="btn btn-sm btn-outline-danger" onclick="toggleFeatured(${p.productId}, false)"><i class='fas fa-times me-1'></i>Bỏ</button>
+                              </div>
+                            </div>
+                          </div>`;
+                    list.appendChild(col);
                 });
-            });
-        }
+            })
+            .catch(console.error);
+    }
 
-        function formatCurrency(amount) {
-            return new Intl.NumberFormat('vi-VN', {
-                style: 'currency',
-                currency: 'VND'
-            }).format(amount);
-        }
-    </script>
+    function openSearchModal() {
+        const modal = new bootstrap.Modal(document.getElementById('featuredSearchModal'));
+        document.getElementById('featuredSearchQuery').value = document.getElementById('searchFeaturedInput').value || '';
+        document.getElementById('featuredSearchResults').innerHTML = '';
+        modal.show();
+    }
+
+    function searchProductsForFeatured() {
+        const q = (document.getElementById('featuredSearchQuery').value || '').trim();
+        if (!q) return;
+        fetch('/api/products/search?keyword=' + encodeURIComponent(q))
+            .then(r => r.json())
+            .then(res => {
+                const tbody = document.getElementById('featuredSearchResults');
+                tbody.innerHTML = '';
+                const items = res.data?.content ?? res.data ?? [];
+                items.forEach(p => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                          <td><img src="${p.imageUrl || '/images/default-product.png'}" style="width:50px;height:50px;object-fit:cover" onerror="this.src='/images/default-product.png'"/></td>
+                          <td>${p.name}</td>
+                          <td>${formatCurrency(p.price || 0)}</td>
+                          <td>${p.isFeatured ? '<span class="badge bg-success">YES</span>' : '<span class="badge bg-secondary">NO</span>'}</td>
+                          <td>
+                            ${p.isFeatured
+                        ? `<button class="btn btn-sm btn-outline-danger" onclick="toggleFeatured(${p.productId}, false)">Bỏ nổi bật</button>`
+                        : `<button class="btn btn-sm btn-outline-primary" onclick="toggleFeatured(${p.productId}, true)">Đánh dấu nổi bật</button>`}
+                          </td>`;
+                    tbody.appendChild(tr);
+                });
+            })
+            .catch(console.error);
+    }
+
+    function toggleFeatured(productId, value) {
+        fetch(`/admin/products/api/${productId}/featured?value=${value}`, { method: 'PUT' })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    loadFeaturedProducts();
+                    // refresh search list if open
+                    const modalEl = document.getElementById('featuredSearchModal');
+                    if (modalEl.classList.contains('show')) {
+                        searchProductsForFeatured();
+                    }
+                } else {
+                    alert('Lỗi: ' + (res.message || 'Không thể cập nhật'));
+                }
+            })
+            .catch(err => alert('Lỗi: ' + err));
+    }
+</script>
 </body>
 </html>

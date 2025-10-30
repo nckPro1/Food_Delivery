@@ -82,6 +82,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/user/test").permitAll() // Allow test endpoint
                         .requestMatchers("/api/test/**").permitAll() // Allow test endpoints
                         .requestMatchers("/api/app/**").permitAll() // Allow app APIs
+                        // VNPay return callback must be public (VNPay server does not send JWT)
+                        .requestMatchers(HttpMethod.GET, "/api/payment/payment-callback").permitAll()
                         .requestMatchers("/admin/store-location").permitAll() // Allow simple store location page
                         .requestMatchers("/admin/shipping-fees").permitAll() // Allow shipping fees page
                         .requestMatchers("/admin/shipping-fees/api/**").permitAll() // Allow shipping fees API
