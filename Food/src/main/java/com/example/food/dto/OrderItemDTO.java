@@ -30,13 +30,20 @@ public class OrderItemDTO {
 
     // Helper methods
     public BigDecimal getTotalPriceWithOptions() {
-        BigDecimal basePrice = unitPrice.multiply(BigDecimal.valueOf(quantity));
+        // Dùng salePrice nếu có, fallback unitPrice
+        BigDecimal priceToUse = (salePrice != null && salePrice.compareTo(BigDecimal.ZERO) > 0)
+                ? salePrice
+                : unitPrice;
+
+        BigDecimal basePrice = priceToUse.multiply(BigDecimal.valueOf(quantity));
         BigDecimal optionsPrice = BigDecimal.ZERO;
 
         if (orderItemOptions != null) {
-            optionsPrice = orderItemOptions.stream()
-                    .map(OrderItemOptionDTO::getExtraPrice)
+            BigDecimal singleItemOptions = orderItemOptions.stream()
+                    .map(OrderItemOptionDTO::getPrice)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
+            // Options áp dụng cho mỗi đơn vị sản phẩm
+            optionsPrice = singleItemOptions.multiply(BigDecimal.valueOf(quantity));
         }
 
         return basePrice.add(optionsPrice);

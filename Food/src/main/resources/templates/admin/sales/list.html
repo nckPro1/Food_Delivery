@@ -105,6 +105,59 @@
         .table tbody tr:hover {
             background-color: rgba(102, 126, 234, 0.05);
         }
+
+        .product-image {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .product-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .product-details {
+            flex-grow: 1;
+        }
+
+        .product-name {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 2px;
+        }
+
+        .product-category {
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+
+        .price-info {
+            display: flex;
+            flex-direction: column;
+            align-items: end;
+        }
+
+        .original-price {
+            font-size: 0.9rem;
+            color: #6c757d;
+            text-decoration: line-through;
+        }
+
+        .sale-price {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #e74c3c;
+        }
+
+        .savings {
+            font-size: 0.8rem;
+            color: #27ae60;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -121,10 +174,16 @@
                     <i class="fas fa-tags me-2"></i>
                     Quản lý Sale
                 </h1>
-                <a href="/admin/sales/add" class="btn btn-primary">
-                    <i class="fas fa-plus me-2"></i>
-                    Thêm Sale
-                </a>
+                <div class="d-flex gap-2">
+                    <a href="/admin/sales/statistics" class="btn btn-info">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Thống kê
+                    </a>
+                    <a href="/admin/sales/add" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>
+                        Thêm Sale
+                    </a>
+                </div>
             </div>
 
             <!-- Flash Messages -->
@@ -140,12 +199,34 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
 
+            <!-- Action Buttons -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex gap-2">
+                        <form action="/admin/sales/deactivate-expired" method="post" style="display: inline;">
+                            <button type="submit" class="btn btn-warning btn-sm">
+                                <i class="fas fa-clock me-2"></i>
+                                Deactivate Sales Hết Hạn
+                            </button>
+                        </form>
+                        <form action="/admin/sales/cleanup-old" method="post" style="display: inline;"
+                              onsubmit="return confirm('Bạn có chắc chắn muốn xóa các sale cũ đã hết hạn?')">
+                            <button type="submit" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-trash-alt me-2"></i>
+                                Cleanup Sales Cũ
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
             <!-- Sales Table -->
             <div class="card">
                 <div class="card-header">
                     <h5 class="card-title mb-0">
                         <i class="fas fa-list me-2"></i>
                         Danh sách Sale
+                        <span class="badge bg-primary ms-2" th:text="${#lists.size(sales)}">0</span>
                     </h5>
                 </div>
                 <div class="card-body">
@@ -153,64 +234,105 @@
                         <table class="table table-hover">
                             <thead>
                             <tr>
-                                <th>ID</th>
+                                <!-- <th>ID</th> -->
                                 <th>Tên Sale</th>
-                                <th>Sản phẩm</th>
+                                <th style="width: 250px;">Sản phẩm</th>
                                 <th>Loại giảm giá</th>
                                 <th>Giá trị</th>
-                                <th>Ngày bắt đầu</th>
-                                <th>Ngày kết thúc</th>
+                                <th style="width: 150px;">Giá</th>
+                                <th>Thời gian</th>
                                 <th>Trạng thái</th>
-                                <th>Thao tác</th>
+                                <th style="width: 120px;">Thao tác</th>
                             </tr>
                             </thead>
                             <tbody>
                             <tr th:each="sale : ${sales}">
-                                <td th:text="${sale.saleId}"></td>
+                                <!-- <td><span class="badge bg-light text-dark" th:text="'#' + ${sale.saleId}"></span></td> -->
                                 <td>
-                                    <strong th:text="${sale.saleName}"></strong>
-                                    <br>
-                                    <small class="text-muted" th:text="${sale.saleDescription}"></small>
-                                </td>
-                                <td th:text="${sale.productName}"></td>
-                                <td>
-                                            <span class="badge"
-                                                  th:classappend="${sale.discountType == 'PERCENTAGE'} ? 'bg-info' : 'bg-warning'"
-                                                  th:text="${sale.discountType == 'PERCENTAGE'} ? 'Phần trăm' : 'Số tiền'">
-                                            </span>
+                                    <div>
+                                        <strong th:text="${sale.saleName}"></strong>
+                                        <br>
+                                        <small class="text-muted" th:text="${sale.saleDescription}"></small>
+                                    </div>
                                 </td>
                                 <td>
-                                            <span th:if="${sale.discountType == 'PERCENTAGE'}"
-                                                  th:text="${sale.discountValue} + '%'"></span>
+                                    <div class="product-info">
+                                        <img th:src="${sale.productImageUrl != null ? sale.productImageUrl : '/images/default-product.png'}"
+                                             th:alt="${sale.productName}"
+                                             class="product-image"
+                                             onerror="this.src='/images/default-product.png'">
+                                        <div class="product-details">
+                                            <div class="product-name" th:text="${sale.productName}"></div>
+                                            <div class="product-category" th:text="${sale.categoryName}"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge"
+                                          th:classappend="${sale.discountType == 'PERCENTAGE'} ? 'bg-info' : 'bg-warning'"
+                                          th:text="${sale.discountType == 'PERCENTAGE'} ? 'Phần trăm' : 'Số tiền'">
+                                    </span>
+                                </td>
+                                <td>
+                                    <span th:if="${sale.discountType == 'PERCENTAGE'}"
+                                          th:text="${sale.discountValue} + '%'" class="fw-bold text-info"></span>
                                     <span th:if="${sale.discountType == 'FIXED_AMOUNT'}"
-                                          th:text="${#numbers.formatDecimal(sale.discountValue, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></span>
-                                </td>
-                                <td th:text="${#temporals.format(sale.startDate, 'dd/MM/yyyy HH:mm')}"></td>
-                                <td th:text="${#temporals.format(sale.endDate, 'dd/MM/yyyy HH:mm')}"></td>
-                                <td>
-                                            <span class="badge"
-                                                  th:classappend="${sale.isActive} ? 'bg-success' : 'bg-secondary'"
-                                                  th:text="${sale.isActive} ? 'Hoạt động' : 'Tạm dừng'">
-                                            </span>
+                                          th:text="${#numbers.formatDecimal(sale.discountValue, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"
+                                          class="fw-bold text-warning"></span>
                                 </td>
                                 <td>
-                                    <div class="btn-group" role="group">
+                                    <div class="price-info">
+                                        <div class="original-price" th:if="${sale.originalPrice != null}"
+                                             th:text="${#numbers.formatDecimal(sale.originalPrice, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></div>
+                                        <div class="sale-price" th:if="${sale.salePrice != null}"
+                                             th:text="${#numbers.formatDecimal(sale.salePrice, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></div>
+                                        <div class="savings" th:if="${sale.originalPrice != null and sale.salePrice != null}"
+                                             th:text="'Tiết kiệm: ' + ${#numbers.formatDecimal(sale.originalPrice - sale.salePrice, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <small class="text-muted">Bắt đầu:</small><br>
+                                        <span th:text="${#temporals.format(sale.startDate, 'dd/MM/yyyy HH:mm')}" class="fw-bold"></span>
+                                        <br>
+                                        <small class="text-muted">Kết thúc:</small><br>
+                                        <span th:text="${#temporals.format(sale.endDate, 'dd/MM/yyyy HH:mm')}" class="fw-bold"></span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column gap-1">
+                                        <span class="badge"
+                                              th:classappend="${sale.isActive} ? 'bg-success' : 'bg-secondary'"
+                                              th:text="${sale.isActive} ? 'Hoạt động' : 'Tạm dừng'">
+                                        </span>
+                                        <!-- Check if sale is expired -->
+                                        <span th:if="${sale.endDate.isBefore(T(java.time.LocalDateTime).now())}"
+                                              class="badge bg-danger">Hết hạn</span>
+                                        <!-- Check if sale is scheduled -->
+                                        <span th:if="${sale.startDate.isAfter(T(java.time.LocalDateTime).now())}"
+                                              class="badge bg-info">Chưa bắt đầu</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="btn-group-vertical btn-group-sm" role="group">
                                         <a th:href="@{/admin/sales/{id}/edit(id=${sale.saleId})}"
-                                           class="btn btn-sm btn-outline-primary">
+                                           class="btn btn-outline-primary btn-sm"
+                                           title="Chỉnh sửa">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <form th:action="@{/admin/sales/toggle/{id}(id=${sale.saleId})}"
+                                        <form th:action="@{/admin/sales/{id}/toggle(id=${sale.saleId})}"
                                               method="post" style="display: inline;">
                                             <button type="submit"
                                                     th:classappend="${sale.isActive} ? 'btn-warning' : 'btn-success'"
-                                                    class="btn btn-sm">
+                                                    class="btn btn-sm"
+                                                    th:title="${sale.isActive} ? 'Tạm dừng' : 'Kích hoạt'">
                                                 <i th:classappend="${sale.isActive} ? 'fas fa-pause' : 'fas fa-play'"></i>
                                             </button>
                                         </form>
                                         <form th:action="@{/admin/sales/delete/{id}(id=${sale.saleId})}"
                                               method="post" style="display: inline;"
                                               onsubmit="return confirm('Bạn có chắc chắn muốn xóa sale này?')">
-                                            <button type="submit" class="btn btn-sm btn-danger">
+                                            <button type="submit" class="btn btn-sm btn-danger" title="Xóa">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </form>
@@ -218,10 +340,13 @@
                                 </td>
                             </tr>
                             <tr th:if="${#lists.isEmpty(sales)}">
-                                <td colspan="9" class="text-center text-muted py-4">
-                                    <i class="fas fa-inbox fa-3x mb-3"></i>
-                                    <br>
-                                    Chưa có sale nào
+                                <td colspan="9" class="text-center text-muted py-5">
+                                    <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                                    <h5>Chưa có sale nào</h5>
+                                    <p>Bắt đầu tạo sale đầu tiên để quản lý khuyến mãi sản phẩm</p>
+                                    <a href="/admin/sales/add" class="btn btn-primary">
+                                        <i class="fas fa-plus me-2"></i>Tạo Sale Đầu Tiên
+                                    </a>
                                 </td>
                             </tr>
                             </tbody>

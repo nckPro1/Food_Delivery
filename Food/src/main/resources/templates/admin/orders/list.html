@@ -101,6 +101,33 @@
       vertical-align: middle;
     }
 
+    /* Payment Status Badges */
+    .payment-badge {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      display: inline-block;
+    }
+
+    .payment-pending { background-color: #fff3cd; color: #856404; }
+    .payment-completed { background-color: #d4edda; color: #155724; }
+    .payment-failed { background-color: #f8d7da; color: #721c24; }
+    .payment-refunded { background-color: #d1ecf1; color: #0c5460; }
+
+    /* Payment Method Badges */
+    .method-badge {
+      padding: 4px 10px;
+      border-radius: 15px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      display: inline-block;
+    }
+
+    .method-cash { background-color: #e7f3ff; color: #004085; }
+    .method-e_wallet { background-color: #f3e5f5; color: #4a148c; }
+    .method-card { background-color: #fff3e0; color: #e65100; }
+
     /* Status Badges */
     .status-badge {
       padding: 4px 12px;
@@ -113,6 +140,7 @@
     .status-confirmed { background-color: #d1ecf1; color: #0c5460; }
     .status-delivering { background-color: #cce5ff; color: #004085; }
     .status-done { background-color: #d4edda; color: #155724; }
+    .status-cancelled { background-color: #f8d7da; color: #721c24; }
 
     /* Button Styles */
     .btn {
@@ -244,6 +272,7 @@
               <option value="CONFIRMED">Đã xác nhận</option>
               <option value="DELIVERING">Đang giao</option>
               <option value="DONE">Hoàn thành</option>
+              <option value="CANCELLED">Đã hủy</option>
             </select>
           </div>
           <div class="col-md-3">
@@ -315,6 +344,8 @@
                 <th>Số điện thoại</th>
                 <th>Địa chỉ giao</th>
                 <th>Tổng tiền</th>
+                <th>PT Thanh toán</th>
+                <th>TT Thanh toán</th>
                 <th>Trạng thái</th>
                 <th>Ngày tạo</th>
                 <th>Thao tác</th>
@@ -357,6 +388,7 @@
             <option value="CONFIRMED">Đã xác nhận</option>
             <option value="DELIVERING">Đang giao</option>
             <option value="DONE">Hoàn thành</option>
+            <option value="CANCELLED">Đã hủy</option>
           </select>
         </div>
       </div>
@@ -437,7 +469,7 @@
     const today = new Date();
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
-    
+
     if (date.toDateString() === today.toDateString()) {
       return 'Hôm nay';
     } else if (date.toDateString() === yesterday.toDateString()) {
@@ -458,7 +490,7 @@
     tbody.innerHTML = '';
 
     if (orders.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Không có đơn hàng nào</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">Không có đơn hàng nào</td></tr>';
       updatePaginationInfo(0, 0, 0);
       return;
     }
@@ -467,25 +499,25 @@
     const startIndex = (currentPage - 1) * pageSize;
     const endIndex = Math.min(startIndex + pageSize, orders.length);
     const pageOrders = orders.slice(startIndex, endIndex);
-    
+
     // Group page orders by date
     const pageOrdersByDate = groupOrdersByDate(pageOrders);
 
     // Display orders grouped by date
     Object.keys(pageOrdersByDate).sort((a, b) => new Date(b) - new Date(a)).forEach(date => {
       const dateOrders = pageOrdersByDate[date];
-      
+
       // Add date header
       const dateRow = document.createElement('tr');
       dateRow.className = 'table-light';
       dateRow.innerHTML = `
-        <td colspan="8" class="fw-bold text-primary py-3">
+        <td colspan="10" class="fw-bold text-primary py-3">
           <i class="fas fa-calendar-day me-2"></i>
           ${formatDateHeader(date)} (${dateOrders.length} đơn hàng)
         </td>
       `;
       tbody.appendChild(dateRow);
-      
+
       // Add orders for this date
       dateOrders.forEach(order => {
         const row = document.createElement('tr');
@@ -494,8 +526,10 @@
           <td>${order.userFullName || 'N/A'}</td>
           <td>${order.userPhone || 'N/A'}</td>
           <td>${order.deliveryAddress || 'N/A'}</td>
-          <td><strong>$${order.finalAmount || 0}</strong></td>
-          <td><span class="status-badge status-${order.orderStatus.toLowerCase()}">${getStatusText(order.orderStatus)}</span></td>
+          <td><strong>${formatVND(order.finalAmount)}</strong></td>
+          <td><span class="method-badge method-${(order.paymentMethod || '').toLowerCase()}">${getPaymentMethodText(order.paymentMethod)}</span></td>
+          <td><span class="payment-badge payment-${(order.paymentStatus || '').toLowerCase()}">${getPaymentStatusText(order.paymentStatus)}</span></td>
+          <td><span class="status-badge status-${(order.orderStatus || '').toLowerCase()}">${getStatusText(order.orderStatus)}</span></td>
           <td>${formatDate(order.createdAt)}</td>
           <td>
             <div class="btn-group" role="group">
@@ -528,16 +562,16 @@
   // Update pagination controls
   function updatePaginationControls(totalOrders) {
     totalPages = Math.ceil(totalOrders / pageSize);
-    
+
     document.getElementById('currentPage').textContent = currentPage;
     document.getElementById('totalPages').textContent = totalPages;
-    
+
     // Update button states
     document.getElementById('firstPageBtn').disabled = currentPage === 1;
     document.getElementById('prevPageBtn').disabled = currentPage === 1;
     document.getElementById('nextPageBtn').disabled = currentPage === totalPages;
     document.getElementById('lastPageBtn').disabled = currentPage === totalPages;
-    
+
     // Generate pagination buttons
     generatePaginationButtons();
   }
@@ -546,27 +580,27 @@
   function generatePaginationButtons() {
     const container = document.getElementById('paginationControls');
     container.innerHTML = '';
-    
+
     const maxVisiblePages = 5;
     let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
     let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-    
+
     if (endPage - startPage + 1 < maxVisiblePages) {
       startPage = Math.max(1, endPage - maxVisiblePages + 1);
     }
-    
+
     // Previous button
     if (startPage > 1) {
       const prevBtn = createPaginationButton('...', startPage - 1, false);
       container.appendChild(prevBtn);
     }
-    
+
     // Page buttons
     for (let i = startPage; i <= endPage; i++) {
       const btn = createPaginationButton(i.toString(), i, i === currentPage);
       container.appendChild(btn);
     }
-    
+
     // Next button
     if (endPage < totalPages) {
       const nextBtn = createPaginationButton('...', endPage + 1, false);
@@ -578,12 +612,12 @@
   function createPaginationButton(text, page, isActive) {
     const li = document.createElement('li');
     li.className = `page-item ${isActive ? 'active' : ''}`;
-    
+
     const button = document.createElement('button');
     button.className = 'page-link';
     button.textContent = text;
     button.onclick = () => goToPage(page);
-    
+
     li.appendChild(button);
     return li;
   }
@@ -623,7 +657,7 @@
     document.getElementById('pendingCount').textContent = stats.pendingOrders || 0;
     document.getElementById('confirmedCount').textContent = stats.confirmedOrders || 0;
     document.getElementById('deliveringCount').textContent = stats.deliveringOrders || 0;
-    document.getElementById('doneCount').textContent = stats.doneOrders || 0;
+    document.getElementById('doneCount').textContent = (stats.completedOrders || stats.doneOrders || 0);
   }
 
   // Update stats from current orders
@@ -759,14 +793,40 @@
       'PENDING': 'Chờ xử lý',
       'CONFIRMED': 'Đã xác nhận',
       'DELIVERING': 'Đang giao',
-      'DONE': 'Hoàn thành'
+      'DONE': 'Hoàn thành',
+      'CANCELLED': 'Đã hủy'
     };
     return statusMap[status] || status;
+  }
+
+  function getPaymentMethodText(method) {
+    const map = {
+      'CASH': 'Tiền mặt',
+      'CARD': 'Thẻ',
+      'BANK_TRANSFER': 'Chuyển khoản',
+      'E_WALLET': 'Ví điện tử'
+    };
+    return map[method] || method || 'N/A';
+  }
+
+  function getPaymentStatusText(status) {
+    const map = {
+      'PENDING': 'Chờ thanh toán',
+      'COMPLETED': 'Đã thanh toán',
+      'FAILED': 'Thất bại',
+      'REFUNDED': 'Hoàn tiền'
+    };
+    return map[status] || status || 'N/A';
   }
 
   function formatDate(dateString) {
     const date = new Date(dateString);
     return date.toLocaleDateString('vi-VN') + ' ' + date.toLocaleTimeString('vi-VN', {hour: '2-digit', minute: '2-digit'});
+  }
+
+  function formatVND(value) {
+    value = Number(value) || 0;
+    return value.toLocaleString('vi-VN') + ' ₫';
   }
 
   function showAlert(message, type) {

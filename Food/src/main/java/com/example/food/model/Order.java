@@ -85,6 +85,11 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Payment> payments;
 
+    @ElementCollection
+    @CollectionTable(name = "order_applied_coupons", joinColumns = @JoinColumn(name = "order_id"))
+    @Column(name = "coupon_code")
+    private List<String> appliedCouponCodes;
+
     // Helper methods
     public void calculateFinalAmount() {
         BigDecimal discount = discountAmount != null ? discountAmount : BigDecimal.ZERO;
@@ -100,7 +105,8 @@ public class Order {
         PENDING,        // Chờ xử lý
         CONFIRMED,      // Đã nhận
         DELIVERING,     // Đang giao
-        DONE            // Hoàn thành
+        DONE,           // Hoàn thành
+        CANCELLED       // Đã hủy
     }
 
     public enum PaymentStatus {

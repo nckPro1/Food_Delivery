@@ -314,4 +314,61 @@ public class OrderController {
         }
     }
 
+    /**
+     * Tính tạm tính đơn hàng theo danh sách hàng và option phía client gửi lên
+     * để hiển thị đúng subtotal (bao gồm options) + shipping + finalAmount.
+     */
+    @PostMapping("/quote")
+    public ResponseEntity<ApiResponse<PriceQuoteDTO>> quoteOrder(@RequestBody CreateOrderRequest request) {
+        try {
+            // Tính subtotal theo đúng logic server (bao gồm options)
+            java.math.BigDecimal subtotal = orderService
+                    .getOrderItemsSubtotal(request.getOrderItems());
+
+            // Tính phí ship theo subtotal
+            java.math.BigDecimal shippingFee = shippingFeeSettingsService.calculateShippingFee(subtotal);
+
+            // Tính coupon nếu có (mỗi coupon dựa trên subtotal gốc, không trừ dần)
+            java.math.BigDecimal couponDiscount = java.math.BigDecimal.ZERO;
+            if (request.getCouponCodes() != null && !request.getCouponCodes().isEmpty()) {
+                for (String code : request.getCouponCodes()) {
+                    if (code == null || code.trim().isEmpty()) continue;
+                    try {
+                        java.math.BigDecimal d = orderService.previewCouponDiscount(code.trim(), subtotal);
+                        if (d != null && d.compareTo(java.math.BigDecimal.ZERO) > 0) {
+                            couponDiscount = couponDiscount.add(d);
+                        }
+                    } catch (Exception ignore) {}
+                }
+                if (couponDiscount.compareTo(subtotal) > 0) {
+                    couponDiscount = subtotal;
+                }
+            }
+
+            java.math.BigDecimal finalAmount = subtotal.add(shippingFee).subtract(couponDiscount);
+            if (finalAmount.compareTo(java.math.BigDecimal.ZERO) < 0) {
+                finalAmount = java.math.BigDecimal.ZERO;
+            }
+
+            PriceQuoteDTO dto = PriceQuoteDTO.builder()
+                    .subtotal(subtotal)
+                    .shippingFee(shippingFee)
+                    .couponDiscount(couponDiscount)
+                    .finalAmount(finalAmount)
+                    .build();
+
+            return ResponseEntity.ok(ApiResponse.<PriceQuoteDTO>builder()
+                    .success(true)
+                    .message("Tính tạm tính đơn hàng thành công")
+                    .data(dto)
+                    .build());
+        } catch (Exception e) {
+            log.error("Error quoting order: ", e);
+            return ResponseEntity.badRequest().body(ApiResponse.<PriceQuoteDTO>builder()
+                    .success(false)
+                    .message("Lỗi tính tạm tính: " + e.getMessage())
+                    .build());
+        }
+    }
+
 }

@@ -268,7 +268,7 @@
                                                 th:value="${product.productId}"
                                                 th:text="${product.name + ' - ' + #numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}"
                                                 th:data-price="${product.price}"
-                                                th:data-category-id="${product.category.categoryId}">
+                                                th:data-category-id="${product.category != null ? product.category.categoryId : ''}">
                                         </option>
                                     </select>
                                 </div>

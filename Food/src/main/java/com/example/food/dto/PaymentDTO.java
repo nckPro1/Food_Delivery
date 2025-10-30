@@ -26,7 +26,7 @@ public class PaymentDTO {
 
     // Helper methods
     public boolean isPaid() {
-        return "PAID".equalsIgnoreCase(paymentStatus);
+        return "COMPLETED".equalsIgnoreCase(paymentStatus);
     }
 
     public boolean isFailed() {

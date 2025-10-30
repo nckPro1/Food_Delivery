@@ -18,7 +18,7 @@ public class CreateOrderRequest {
     private String deliveryNotes; // Optional delivery notes
     private String paymentMethod;
     private List<OrderItemRequest> orderItems;
-    private String couponCode; // Optional coupon code
+    private List<String> couponCodes; // Danh sách nhiều coupon cho đơn hàng
 
     @Data
     @Builder

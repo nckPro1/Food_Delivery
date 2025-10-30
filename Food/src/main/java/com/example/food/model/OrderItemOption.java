@@ -5,11 +5,13 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Order_Item_Options")
+@Table(name = "order_item_options")
 @Data
 @Builder
 @NoArgsConstructor
@@ -29,6 +31,18 @@ public class OrderItemOption {
     @JoinColumn(name = "option_id", nullable = false)
     private ProductOption productOption;
 
-    @Column(name = "extra_price", precision = 10, scale = 2)
-    private BigDecimal extraPrice = BigDecimal.ZERO;
+    @Column(name = "option_name", nullable = false, length = 100)
+    private String optionName;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "option_type", nullable = false)
+    private ProductOption.OptionType optionType;
+
+    @Column(name = "price", precision = 10, scale = 2)
+    @Builder.Default
+    private BigDecimal price = BigDecimal.ZERO;
+
+    @CreationTimestamp
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 }

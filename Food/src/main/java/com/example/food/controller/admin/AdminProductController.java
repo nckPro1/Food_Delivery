@@ -5,6 +5,7 @@ import com.example.food.model.Product;
 import com.example.food.model.Category;
 import com.example.food.model.ProductOption;
 import com.example.food.service.ProductService;
+import com.example.food.repository.ProductRepository;
 import com.example.food.repository.ProductOptionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,7 @@ public class AdminProductController {
 
     private final ProductService productService;
     private final ProductOptionRepository productOptionRepository;
+    private final ProductRepository productRepository;
 
     // ===============================
     // WEB PAGES (Thymeleaf)
@@ -312,6 +314,33 @@ public class AdminProductController {
             return ResponseEntity.badRequest().body(ApiResponse.<ProductDTO>builder()
                     .success(false)
                     .message("Lỗi cập nhật sản phẩm: " + e.getMessage())
+                    .build());
+        }
+    }
+
+    /**
+     * Cập nhật cờ Featured cho sản phẩm (API)
+     */
+    @PutMapping("/api/{productId}/featured")
+    @ResponseBody
+    public ResponseEntity<ApiResponse<ProductDTO>> updateFeatured(
+            @PathVariable Long productId,
+            @RequestParam("value") boolean isFeatured) {
+        try {
+            Product product = productRepository.findById(productId)
+                    .orElseThrow(() -> new IllegalArgumentException("Sản phẩm không tồn tại"));
+            product.setIsFeatured(isFeatured);
+            Product saved = productRepository.save(product);
+
+            return ResponseEntity.ok(ApiResponse.<ProductDTO>builder()
+                    .success(true)
+                    .message("Cập nhật món tiêu biểu thành công")
+                    .data(convertToDTO(saved))
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.<ProductDTO>builder()
+                    .success(false)
+                    .message("Lỗi cập nhật món tiêu biểu: " + e.getMessage())
                     .build());
         }
     }

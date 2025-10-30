@@ -19,5 +19,6 @@ public class OrderItemOptionDTO {
     private Long optionId;
     private String optionName;
     private String optionType;
-    private BigDecimal extraPrice;
+    private BigDecimal price;
+    private LocalDateTime createdAt;
 }

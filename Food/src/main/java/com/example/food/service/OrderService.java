@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.ArrayList;
 
 @Service
 @RequiredArgsConstructor
@@ -60,21 +61,30 @@ public class OrderService {
             deliveryAddress = user.getAddress();
         }
 
-        // Process coupon if provided
+        // Validate payment method
+        if (request.getPaymentMethod() == null || request.getPaymentMethod().trim().isEmpty()) {
+            throw new IllegalArgumentException("Bạn phải chọn phương thức thanh toán!");
+        }
+
+        List<String> couponCodes = request.getCouponCodes();
+        BigDecimal baseSubtotal = calculateTotalAmount(request.getOrderItems());
         BigDecimal couponDiscount = BigDecimal.ZERO;
-        if (request.getCouponCode() != null && !request.getCouponCode().trim().isEmpty()) {
-            try {
-                // Calculate total amount first to validate coupon
-                BigDecimal tempTotal = calculateTotalAmount(request.getOrderItems());
-                Coupon coupon = couponRepository.findValidCoupon(request.getCouponCode(), LocalDateTime.now())
-                        .orElseThrow(() -> new IllegalArgumentException("Invalid or expired coupon"));
-
-                // Calculate actual discount using the coupon's calculateDiscount method
-                couponDiscount = coupon.calculateDiscount(tempTotal);
-
-                log.info("Applied coupon: {}, discount: {}", request.getCouponCode(), couponDiscount);
-            } catch (Exception e) {
-                throw new IllegalArgumentException("Invalid coupon: " + e.getMessage());
+        List<String> appliedCoupons = new ArrayList<>();
+        if (couponCodes != null && !couponCodes.isEmpty()) {
+            for (String code : couponCodes) {
+                Optional<Coupon> couponOpt = couponRepository.findValidCoupon(code, LocalDateTime.now());
+                if (couponOpt.isPresent() && couponOpt.get().canBeUsedForOrder(baseSubtotal)) {
+                    Coupon coupon = couponOpt.get();
+                    BigDecimal thisDiscount = coupon.calculateDiscount(baseSubtotal);
+                    if (thisDiscount.compareTo(BigDecimal.ZERO) > 0) {
+                        couponDiscount = couponDiscount.add(thisDiscount);
+                        appliedCoupons.add(code);
+                    }
+                }
+            }
+            // Do not allow total coupon discount to exceed order subtotal
+            if (couponDiscount.compareTo(baseSubtotal) > 0) {
+                couponDiscount = baseSubtotal;
             }
         }
 
@@ -88,6 +98,8 @@ public class OrderService {
                 .deliveryAddress(deliveryAddress)
                 .deliveryNotes(request.getDeliveryNotes())
                 .couponDiscount(couponDiscount)
+                .discountAmount(couponDiscount)
+                .appliedCouponCodes(appliedCoupons)
                 .build();
 
         // Calculate order items and total
@@ -119,7 +131,9 @@ public class OrderService {
                                     return OrderItemOption.builder()
                                             .orderItem(orderItem)
                                             .productOption(productOption)
-                                            .extraPrice(productOption.getPrice())
+                                            .optionName(productOption.getOptionName())
+                                            .optionType(productOption.getOptionType())
+                                            .price(productOption.getPrice())
                                             .build();
                                 })
                                 .collect(Collectors.toList());
@@ -145,6 +159,9 @@ public class OrderService {
 
         // Calculate final amount
         BigDecimal finalAmount = totalAmount.add(shippingFee).subtract(couponDiscount);
+        if (finalAmount.compareTo(BigDecimal.ZERO) < 0) {
+            finalAmount = BigDecimal.ZERO;
+        }
         order.setFinalAmount(finalAmount);
 
         // Set estimated delivery time
@@ -235,6 +252,34 @@ public class OrderService {
         // Update actual delivery time if done
         if (newStatus == Order.OrderStatus.DONE) {
             order.setActualDeliveryTime(LocalDateTime.now());
+
+            // Tự động set payment status = COMPLETED cho đơn CASH khi DONE
+            if (order.getPaymentMethod() == Order.PaymentMethod.CASH) {
+                order.setPaymentStatus(Order.PaymentStatus.COMPLETED);
+
+                // Cập nhật Payment entity
+                List<Payment> payments = paymentRepository.findByOrderOrderId(order.getOrderId());
+                if (!payments.isEmpty()) {
+                    Payment payment = payments.get(0);
+                    payment.setPaymentStatus(Payment.PaymentStatus.COMPLETED);
+                    payment.setPaymentDate(LocalDateTime.now());
+                    payment.setPaymentNotes("Thanh toán tiền mặt khi giao hàng hoàn tất");
+                    paymentRepository.save(payment);
+                }
+                log.info("Auto-completed payment status for CASH order: {}", orderId);
+            }
+        } else if (newStatus == Order.OrderStatus.CANCELLED) {
+            // Khi hủy đơn, cập nhật trạng thái thanh toán về FAILED
+            order.setPaymentStatus(Order.PaymentStatus.FAILED);
+            List<Payment> payments = paymentRepository.findByOrderOrderId(order.getOrderId());
+            if (!payments.isEmpty()) {
+                Payment payment = payments.get(0);
+                payment.setPaymentStatus(Payment.PaymentStatus.FAILED);
+                payment.setPaymentDate(LocalDateTime.now());
+                payment.setPaymentNotes("Đơn hàng đã bị hủy - thanh toán thất bại");
+                paymentRepository.save(payment);
+            }
+            log.info("Payment marked FAILED due to order cancellation: {}", orderId);
         }
 
         Order savedOrder = orderRepository.save(order);
@@ -252,9 +297,19 @@ public class OrderService {
             throw new IllegalStateException("Order cannot be cancelled");
         }
 
-        // Since we don't have CANCELLED status, we'll mark as DONE with cancellation note
-        order.setOrderStatus(Order.OrderStatus.DONE);
-        order.setDeliveryNotes(order.getDeliveryNotes() + " [ĐÃ HỦY]");
+        // Set order status to CANCELLED
+        order.setOrderStatus(Order.OrderStatus.CANCELLED);
+        // Also set payment status to FAILED
+        order.setPaymentStatus(Order.PaymentStatus.FAILED);
+        // Update related payment record if exists
+        List<Payment> payments = paymentRepository.findByOrderOrderId(order.getOrderId());
+        if (!payments.isEmpty()) {
+            Payment payment = payments.get(0);
+            payment.setPaymentStatus(Payment.PaymentStatus.FAILED);
+            payment.setPaymentDate(LocalDateTime.now());
+            payment.setPaymentNotes("Đơn hàng đã bị hủy - thanh toán thất bại");
+            paymentRepository.save(payment);
+        }
         Order savedOrder = orderRepository.save(order);
 
         log.info("Order cancelled: {}", orderId);
@@ -394,9 +449,10 @@ public class OrderService {
                 .orderItemOptionId(option.getOrderItemOptionId())
                 .orderItemId(option.getOrderItem().getOrderItemId())
                 .optionId(option.getProductOption().getOptionId())
-                .optionName(option.getProductOption().getOptionName())
-                .optionType(option.getProductOption().getOptionType().toString())
-                .extraPrice(option.getExtraPrice())
+                .optionName(option.getOptionName())
+                .optionType(option.getOptionType().toString())
+                .price(option.getPrice())
+                .createdAt(option.getCreatedAt())
                 .build();
     }
 
@@ -406,7 +462,8 @@ public class OrderService {
                     Product product = productRepository.findById(itemRequest.getProductId())
                             .orElseThrow(() -> new IllegalArgumentException("Product not found: " + itemRequest.getProductId()));
 
-                    BigDecimal itemTotal = product.getCurrentPrice().multiply(BigDecimal.valueOf(itemRequest.getQuantity()));
+                    // Use original unit price (giá gốc) for coupon base subtotal
+                    BigDecimal itemTotal = product.getPrice().multiply(BigDecimal.valueOf(itemRequest.getQuantity()));
 
                     // Add option prices
                     if (itemRequest.getSelectedOptionIds() != null) {
@@ -418,11 +475,22 @@ public class OrderService {
                                 })
                                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+                        // Options áp dụng cho mỗi đơn vị sản phẩm
                         itemTotal = itemTotal.add(optionsPrice.multiply(BigDecimal.valueOf(itemRequest.getQuantity())));
                     }
 
                     return itemTotal;
                 })
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    // Public helpers for quoting from controller
+    public BigDecimal getOrderItemsSubtotal(List<CreateOrderRequest.OrderItemRequest> orderItems) {
+        return calculateTotalAmount(orderItems);
+    }
+
+    public BigDecimal previewCouponDiscount(String couponCode, BigDecimal subtotal) {
+        java.util.Optional<Coupon> c = couponRepository.findValidCoupon(couponCode, java.time.LocalDateTime.now());
+        return c.map(coupon -> coupon.calculateDiscount(subtotal)).orElse(BigDecimal.ZERO);
     }
 }

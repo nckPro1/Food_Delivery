@@ -28,4 +28,6 @@ public class CouponDTO {
     private Boolean isActive;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private Boolean canUse; // Có dùng được coupon này cho đơn này không
+    private String message; // Thông báo cho client biết vì sao không dùng được (hoặc thành công)
 }

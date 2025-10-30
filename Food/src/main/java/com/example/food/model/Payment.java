@@ -37,7 +37,7 @@ public class Payment {
     private BigDecimal paymentAmount;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "payment_status")
+    @Column(name = "payment_status", length = 20)
     private PaymentStatus paymentStatus = PaymentStatus.PENDING;
 
     @Column(name = "transaction_id", length = 100)
@@ -53,7 +53,7 @@ public class Payment {
     // Enums
     public enum PaymentStatus {
         PENDING("Pending"),
-        PAID("Paid"),
+        COMPLETED("Completed"),
         FAILED("Failed"),
         REFUNDED("Refunded");
 
@@ -70,7 +70,7 @@ public class Payment {
 
     // Helper methods
     public boolean isPaid() {
-        return paymentStatus == PaymentStatus.PAID;
+        return paymentStatus == PaymentStatus.COMPLETED;
     }
 
     public boolean isFailed() {

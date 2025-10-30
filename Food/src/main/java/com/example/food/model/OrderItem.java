@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "Order_Items")
+@Table(name = "order_items")
 @Data
 @Builder
 @NoArgsConstructor
@@ -65,9 +65,13 @@ public class OrderItem {
         BigDecimal optionsPrice = BigDecimal.ZERO;
 
         if (orderItemOptions != null) {
-            optionsPrice = orderItemOptions.stream()
-                    .map(OrderItemOption::getExtraPrice)
+            // Calculate total options price and multiply by quantity
+            // because options apply to each item, not just once per order
+            BigDecimal singleItemOptionsPrice = orderItemOptions.stream()
+                    .map(OrderItemOption::getPrice)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            optionsPrice = singleItemOptionsPrice.multiply(BigDecimal.valueOf(quantity));
         }
 
         this.totalPrice = basePrice.add(optionsPrice);
