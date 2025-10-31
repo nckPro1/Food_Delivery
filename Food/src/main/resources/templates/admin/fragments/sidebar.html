@@ -62,6 +62,12 @@
           </a>
         </li>
         <li class="nav-item">
+          <a class="nav-link" href="/admin/reviews" th:classappend="${#strings.startsWith(pageTitle, 'Quản lý đánh giá')} ? 'active' : ''">
+            <i class="fas fa-star me-2"></i>
+            Đánh giá
+          </a>
+        </li>
+        <li class="nav-item">
           <a class="nav-link" href="/admin/store-settings" th:classappend="${#strings.startsWith(pageTitle, 'Cài đặt nhà hàng')} ? 'active' : ''">
             <i class="fas fa-store me-2"></i>
             Cài đặt nhà hàng

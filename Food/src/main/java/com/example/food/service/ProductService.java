@@ -46,6 +46,15 @@ public class ProductService {
     }
 
     /**
+     * Lấy tất cả sản phẩm không hoạt động với pagination
+     */
+    @Transactional(readOnly = true)
+    public Page<Product> getAllInactiveProducts(Pageable pageable) {
+        log.info("Fetching all inactive products with pagination: {}", pageable);
+        return productRepository.findByIsAvailableFalse(pageable);
+    }
+
+    /**
      * Lấy sản phẩm theo ID
      */
     @Transactional(readOnly = true)
@@ -73,6 +82,15 @@ public class ProductService {
     }
 
     /**
+     * Lấy sản phẩm inactive theo category với pagination
+     */
+    @Transactional(readOnly = true)
+    public Page<Product> getInactiveProductsByCategory(Long categoryId, Pageable pageable) {
+        log.info("Fetching inactive products by category ID: {} with pagination: {}", categoryId, pageable);
+        return productRepository.findByCategoryCategoryIdAndIsAvailableFalse(categoryId, pageable);
+    }
+
+    /**
      * Lấy sản phẩm featured
      */
     @Transactional(readOnly = true)
@@ -91,12 +109,30 @@ public class ProductService {
     }
 
     /**
+     * Tìm kiếm sản phẩm inactive theo tên
+     */
+    @Transactional(readOnly = true)
+    public Page<Product> searchInactiveProductsByName(String keyword, Pageable pageable) {
+        log.info("Searching inactive products by name: {} with pagination: {}", keyword, pageable);
+        return productRepository.searchInactiveByName(keyword, pageable);
+    }
+
+    /**
      * Tìm kiếm sản phẩm theo tên và category
      */
     @Transactional(readOnly = true)
     public Page<Product> searchProductsByNameAndCategory(String keyword, Long categoryId, Pageable pageable) {
         log.info("Searching products by name: {} and category: {} with pagination: {}", keyword, categoryId, pageable);
         return productRepository.searchByNameAndCategory(keyword, categoryId, pageable);
+    }
+
+    /**
+     * Tìm kiếm sản phẩm inactive theo tên và category
+     */
+    @Transactional(readOnly = true)
+    public Page<Product> searchInactiveProductsByNameAndCategory(String keyword, Long categoryId, Pageable pageable) {
+        log.info("Searching inactive products by name: {} and category: {} with pagination: {}", keyword, categoryId, pageable);
+        return productRepository.searchInactiveByNameAndCategory(keyword, categoryId, pageable);
     }
 
     /**

@@ -60,6 +60,7 @@ public class AdminProductController {
             @RequestParam(defaultValue = "asc") String sortDir,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false, defaultValue = "false") boolean inactive,
             Model model) {
 
         try {
@@ -68,16 +69,30 @@ public class AdminProductController {
             Pageable pageable = PageRequest.of(page, size, sort);
 
             Page<Product> products;
-            if (search != null && !search.isEmpty()) {
-                if (categoryId != null) {
-                    products = productService.searchProductsByNameAndCategory(search, categoryId, pageable);
+            if (inactive) {
+                if (search != null && !search.isEmpty()) {
+                    if (categoryId != null) {
+                        products = productService.searchInactiveProductsByNameAndCategory(search, categoryId, pageable);
+                    } else {
+                        products = productService.searchInactiveProductsByName(search, pageable);
+                    }
+                } else if (categoryId != null) {
+                    products = productService.getInactiveProductsByCategory(categoryId, pageable);
                 } else {
-                    products = productService.searchProductsByName(search, pageable);
+                    products = productService.getAllInactiveProducts(pageable);
                 }
-            } else if (categoryId != null) {
-                products = productService.getProductsByCategory(categoryId, pageable);
             } else {
-                products = productService.getAllAvailableProducts(pageable);
+                if (search != null && !search.isEmpty()) {
+                    if (categoryId != null) {
+                        products = productService.searchProductsByNameAndCategory(search, categoryId, pageable);
+                    } else {
+                        products = productService.searchProductsByName(search, pageable);
+                    }
+                } else if (categoryId != null) {
+                    products = productService.getProductsByCategory(categoryId, pageable);
+                } else {
+                    products = productService.getAllAvailableProducts(pageable);
+                }
             }
 
             List<Category> categories = productService.getAllActiveCategories();
@@ -91,7 +106,8 @@ public class AdminProductController {
             model.addAttribute("sortDir", sortDir);
             model.addAttribute("search", search);
             model.addAttribute("categoryId", categoryId);
-            model.addAttribute("pageTitle", "Sản phẩm - Danh sách");
+            model.addAttribute("pageTitle", inactive ? "Sản phẩm - Ngưng hiển thị" : "Sản phẩm - Danh sách");
+            model.addAttribute("inactive", inactive);
 
             return "admin/products/list";
         } catch (Exception e) {
@@ -341,6 +357,33 @@ public class AdminProductController {
             return ResponseEntity.badRequest().body(ApiResponse.<ProductDTO>builder()
                     .success(false)
                     .message("Lỗi cập nhật món tiêu biểu: " + e.getMessage())
+                    .build());
+        }
+    }
+
+    /**
+     * Cập nhật trạng thái hiển thị (isAvailable) cho sản phẩm (API)
+     */
+    @PutMapping("/api/{productId}/availability")
+    @ResponseBody
+    public ResponseEntity<ApiResponse<ProductDTO>> updateAvailability(
+            @PathVariable Long productId,
+            @RequestParam("value") boolean isAvailable) {
+        try {
+            Product product = productRepository.findById(productId)
+                    .orElseThrow(() -> new IllegalArgumentException("Sản phẩm không tồn tại"));
+            product.setIsAvailable(isAvailable);
+            Product saved = productRepository.save(product);
+
+            return ResponseEntity.ok(ApiResponse.<ProductDTO>builder()
+                    .success(true)
+                    .message("Cập nhật trạng thái hiển thị thành công")
+                    .data(convertToDTO(saved))
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.<ProductDTO>builder()
+                    .success(false)
+                    .message("Lỗi cập nhật trạng thái hiển thị: " + e.getMessage())
                     .build());
         }
     }
