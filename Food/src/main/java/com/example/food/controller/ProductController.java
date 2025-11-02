@@ -70,6 +70,14 @@ public class ProductController {
             Product product = productService.getProductById(productId)
                     .orElseThrow(() -> new IllegalArgumentException("Product not found"));
 
+            // Chỉ cho phép truy cập sản phẩm đang hoạt động ở API public
+            if (Boolean.FALSE.equals(product.getIsAvailable())) {
+                return ResponseEntity.status(404).body(ApiResponse.<ProductDTO>builder()
+                        .success(false)
+                        .message("Product not found")
+                        .build());
+            }
+
             return ResponseEntity.ok(ApiResponse.<ProductDTO>builder()
                     .success(true)
                     .message("Product retrieved successfully")

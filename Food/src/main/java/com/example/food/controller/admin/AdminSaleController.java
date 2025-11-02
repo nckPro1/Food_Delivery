@@ -1,4 +1,3 @@
-
 package com.example.food.controller.admin;
 
 import com.example.food.dto.CreateSaleRequest;
@@ -96,7 +95,6 @@ public class AdminSaleController {
         }
     }
 
-    // Cả hai endpoint delete để hỗ trợ các format URL khác nhau
     @PostMapping("/sales/{saleId}/delete")
     public String deleteSale(@PathVariable Long saleId, RedirectAttributes redirectAttributes) {
         try {
@@ -104,30 +102,6 @@ public class AdminSaleController {
             redirectAttributes.addFlashAttribute("successMessage", "Xóa sale thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi xóa sale: " + e.getMessage());
-        }
-        return "redirect:/admin/sales";
-    }
-
-    // Thêm endpoint delete với format khác (theo log của bạn)
-    @PostMapping("/sales/delete/{saleId}")
-    public String deleteSaleAlt(@PathVariable Long saleId, RedirectAttributes redirectAttributes) {
-        try {
-            saleService.deleteSale(saleId);
-            redirectAttributes.addFlashAttribute("successMessage", "Xóa sale thành công!");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi xóa sale: " + e.getMessage());
-        }
-        return "redirect:/admin/sales";
-    }
-
-    // Bulk delete - xóa nhiều sale cùng lúc
-    @PostMapping("/sales/delete-multiple")
-    public String deleteSales(@RequestParam("saleIds") List<Long> saleIds, RedirectAttributes redirectAttributes) {
-        try {
-            saleService.deleteSales(saleIds);
-            redirectAttributes.addFlashAttribute("successMessage", "Xóa " + saleIds.size() + " sale thành công!");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi xóa sales: " + e.getMessage());
         }
         return "redirect:/admin/sales";
     }
@@ -143,70 +117,4 @@ public class AdminSaleController {
         return "redirect:/admin/sales";
     }
 
-    // API endpoints cho AJAX calls
-    @PostMapping("/sales/api/{saleId}/delete")
-    @ResponseBody
-    public String deleteSaleAPI(@PathVariable Long saleId) {
-        try {
-            saleService.deleteSale(saleId);
-            return "success";
-        } catch (Exception e) {
-            return "error: " + e.getMessage();
-        }
-    }
-
-    @PostMapping("/sales/api/delete-multiple")
-    @ResponseBody
-    public String deleteSalesAPI(@RequestParam("saleIds") List<Long> saleIds) {
-        try {
-            saleService.deleteSales(saleIds);
-            return "success";
-        } catch (Exception e) {
-            return "error: " + e.getMessage();
-        }
-    }
-
-    @PostMapping("/sales/api/{saleId}/toggle")
-    @ResponseBody
-    public String toggleSaleStatusAPI(@PathVariable Long saleId) {
-        try {
-            SaleDTO updatedSale = saleService.toggleSaleStatus(saleId);
-            return updatedSale.getIsActive() ? "activated" : "deactivated";
-        } catch (Exception e) {
-            return "error: " + e.getMessage();
-        }
-    }
-
-    // Endpoint để force deactivate expired sales (dùng cho admin manual trigger)
-    @PostMapping("/sales/deactivate-expired")
-    public String deactivateExpiredSales(RedirectAttributes redirectAttributes) {
-        try {
-            saleService.deactivateExpiredSales();
-            redirectAttributes.addFlashAttribute("successMessage", "Đã deactivate các sale hết hạn!");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi deactivate sales: " + e.getMessage());
-        }
-        return "redirect:/admin/sales";
-    }
-
-    // Endpoint để cleanup old expired sales
-    @PostMapping("/sales/cleanup-old")
-    public String cleanupOldSales(RedirectAttributes redirectAttributes) {
-        try {
-            saleService.cleanupOldExpiredSales();
-            redirectAttributes.addFlashAttribute("successMessage", "Đã cleanup các sale cũ!");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi cleanup sales: " + e.getMessage());
-        }
-        return "redirect:/admin/sales";
-    }
-
-    // Endpoint để xem sale statistics
-    @GetMapping("/sales/statistics")
-    public String viewSaleStatistics(Model model) {
-        SaleService.SaleStatistics stats = saleService.getSaleStatistics();
-        model.addAttribute("statistics", stats);
-        model.addAttribute("pageTitle", "Sale - Thống kê");
-        return "admin/sales/statistics";
-    }
 }

@@ -48,7 +48,7 @@ public class AccountMergeService {
         User user = new User();
         user.setEmail(email);
         user.setAuthProvider(authProvider);
-        user.setRoleId(1);
+        user.setRoleId(2); // Default USER role (Admin = 1, User = 2 theo database)
 
         if (authProvider == AuthProvider.GOOGLE) {
             user.setFullName(googleName != null ? googleName : "Google User");

@@ -49,7 +49,7 @@ public class User {
 
     @Column(name = "role_id")
     @Builder.Default
-    private Integer roleId = 2; // Mặc định role user = 2
+    private Integer roleId = 2; // Mặc định role user = 2 (Admin = 1, User = 2)
 
     @Column(name = "is_active")
     @Builder.Default
@@ -73,6 +73,6 @@ public class User {
     }
 
     public boolean isAdmin() {
-        return roleId != null && roleId == 1; // Admin role = 1
+        return roleId != null && roleId == 1; // Admin role = 1, User role = 2 (theo database)
     }
 }

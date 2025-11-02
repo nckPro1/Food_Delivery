@@ -103,6 +103,7 @@ public class VnpayService {
             String vnpSecureHash = params.get("vnp_SecureHash");
             String vnpTxnRef = params.get("vnp_TxnRef");
             String vnpResponseCode = params.get("vnp_ResponseCode");
+            String vnpTxnStatus = params.get("vnp_TransactionStatus");
             String vnpAmount = params.get("vnp_Amount");
 
             // Xóa vnp_SecureHash khỏi params để tính toán hash
@@ -123,9 +124,9 @@ public class VnpayService {
             }
 
             // Cập nhật trạng thái payment
-            updatePaymentStatus(vnpTxnRef, vnpResponseCode, params);
+            updatePaymentStatus(vnpTxnRef, vnpResponseCode, vnpTxnStatus, params);
 
-            if ("00".equals(vnpResponseCode)) {
+            if ("00".equals(vnpResponseCode) && "00".equals(vnpTxnStatus)) {
                 log.info("VNPay payment successful for txnRef: {}", vnpTxnRef);
                 return ApiResponse.<String>builder()
                         .success(true)
@@ -184,24 +185,27 @@ public class VnpayService {
     /**
      * Cập nhật trạng thái payment sau callback
      */
-    private void updatePaymentStatus(String txnRef, String responseCode, Map<String, String> params) {
+    private void updatePaymentStatus(String txnRef, String responseCode, String txnStatus, Map<String, String> params) {
         try {
             Payment payment = paymentRepository.findByTransactionId(txnRef).orElse(null);
             if (payment != null) {
-                if ("00".equals(responseCode)) {
+                boolean ok = "00".equals(responseCode) && "00".equals(txnStatus);
+                if (ok) {
                     payment.setPaymentStatus(Payment.PaymentStatus.COMPLETED);
                     payment.getOrder().setPaymentStatus(Order.PaymentStatus.COMPLETED);
+                    // Mark order as DONE for delivery flow
+                    payment.getOrder().setOrderStatus(Order.OrderStatus.DONE);
                 } else {
                     payment.setPaymentStatus(Payment.PaymentStatus.FAILED);
                     payment.getOrder().setPaymentStatus(Order.PaymentStatus.FAILED);
                 }
 
-                payment.setPaymentNotes("VNPay response: " + responseCode + " - " + params.get("vnp_TransactionStatus"));
+                payment.setPaymentNotes("VNPay response: " + responseCode + " - " + txnStatus);
                 paymentRepository.save(payment);
                 orderRepository.save(payment.getOrder());
 
                 log.info("Updated payment status for txnRef: {} to status: {}", txnRef,
-                        "00".equals(responseCode) ? "COMPLETED" : "FAILED");
+                        (ok ? "COMPLETED" : "FAILED"));
             }
 
         } catch (Exception e) {

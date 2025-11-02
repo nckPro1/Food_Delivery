@@ -70,8 +70,8 @@ public class CouponService {
                 .orElseThrow(() -> new RuntimeException("Coupon not found"));
 
         // Check if coupon code already exists (excluding current coupon)
-        if (!coupon.getCouponCode().equals(request.getCouponCode()) &&
-                couponRepository.existsByCouponCode(request.getCouponCode())) {
+        if (!coupon.getCouponCode().equals(request.getCouponCode()) && 
+            couponRepository.existsByCouponCode(request.getCouponCode())) {
             throw new RuntimeException("Coupon code already exists");
         }
 
@@ -180,8 +180,8 @@ public class CouponService {
     public int deactivateExpiredCoupons() {
         LocalDateTime now = LocalDateTime.now();
         List<Coupon> expired = couponRepository.findAll().stream()
-                .filter(c -> c.getIsActive() && c.getEndDate() != null && now.isAfter(c.getEndDate()))
-                .collect(java.util.stream.Collectors.toList());
+            .filter(c -> c.getIsActive() && c.getEndDate() != null && now.isAfter(c.getEndDate()))
+            .collect(java.util.stream.Collectors.toList());
         for (Coupon c : expired) {
             c.setIsActive(false);
         }

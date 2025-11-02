@@ -167,6 +167,18 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
       </div>
 
+      <!-- Status Tabs -->
+      <div class="mb-3" id="status-tabs">
+        <ul class="nav nav-pills">
+          <li class="nav-item">
+            <a id="tab-active" class="nav-link" th:classappend="${!inactive} ? 'active'" th:href="@{/admin/products(inactive=false, search=${search}, categoryId=${categoryId}, sortBy=${sortBy}, sortDir=${sortDir})}" onclick="return switchTab(false, event)">Đang hiển thị</a>
+          </li>
+          <li class="nav-item">
+            <a id="tab-inactive" class="nav-link" th:classappend="${inactive} ? 'active'" th:href="@{/admin/products(inactive=true, search=${search}, categoryId=${categoryId}, sortBy=${sortBy}, sortDir=${sortDir})}" onclick="return switchTab(true, event)">Không hiển thị</a>
+          </li>
+        </ul>
+      </div>
+
       <!-- Filters -->
       <div class="card mb-4">
         <div class="card-body">
@@ -208,13 +220,14 @@
                   <i class="fas fa-search"></i>
                 </button>
               </div>
+              <input type="hidden" name="inactive" th:value="${inactive}">
             </div>
           </form>
         </div>
       </div>
 
       <!-- Products Table -->
-      <div class="card">
+      <div class="card" id="products-card">
         <div class="card-header">
           <h6 class="m-0 font-weight-bold">
             <i class="fas fa-list me-2"></i>
@@ -222,7 +235,7 @@
             <span class="badge bg-light text-dark ms-2" th:text="${totalElements}">0</span>
           </h6>
         </div>
-        <div class="card-body">
+        <div class="card-body" id="products-section">
           <div th:if="${#lists.isEmpty(products.content)}" class="text-center text-muted py-5">
             <i class="fas fa-pizza-slice" style="font-size: 3rem; display: block; margin-bottom: 1rem; color: #667eea;"></i>
             <h5>Chưa có sản phẩm nào</h5>
@@ -246,8 +259,8 @@
                 <th>Thao tác</th>
               </tr>
               </thead>
-              <tbody>
-              <tr th:each="product : ${products.content}">
+              <tbody id="products-tbody">
+              <tr th:each="product : ${products.content}" th:attr="data-product-id=${product.productId}">
                 <td>
                   <img th:src="${product.imageUrl}" th:alt="${product.name}"
                        class="product-image" th:onerror="this.src='/images/default-avatar.jpg'">
@@ -267,13 +280,9 @@
                   <strong th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></strong>
                 </td>
                 <td>
-                  <span th:if="${product.isAvailable}" class="badge bg-success">
-                    <i class="fas fa-check me-1"></i>
-                    Có sẵn
-                  </span>
-                  <span th:if="${not product.isAvailable}" class="badge bg-danger">
-                    <i class="fas fa-times me-1"></i>
-                    Hết hàng
+                  <span class="badge" th:classappend="${product.isAvailable} ? ' bg-success' : ' bg-danger'" th:attr="data-status-badge=${product.productId}">
+                    <i class="fas" th:classappend="${product.isAvailable} ? ' fa-check me-1' : ' fa-times me-1'"></i>
+                    <span th:text="${product.isAvailable} ? 'Có sẵn' : 'Hết hàng'"></span>
                   </span>
                 </td>
                 <td>
@@ -293,10 +302,10 @@
                        class="btn btn-sm btn-outline-warning" title="Chỉnh sửa">
                       <i class="fas fa-edit"></i>
                     </a>
-                    <button type="button" class="btn btn-sm btn-outline-danger"
-                            title="Xóa"
-                            th:onclick="'deleteProduct(' + ${product.productId} + ')'">
-                      <i class="fas fa-trash"></i>
+                    <button type="button" class="btn btn-sm btn-outline-primary"
+                            title="Chuyển trạng thái"
+                            th:onclick="'toggleAvailabilityAuto(' + ${product.productId} + ')'">
+                      <i class="fas fa-retweet"></i>
                     </button>
                   </div>
                 </td>
@@ -306,10 +315,10 @@
           </div>
 
           <!-- Pagination -->
-          <nav th:if="${totalPages gt 1}" aria-label="Page navigation">
+          <nav id="pagination" th:if="${totalPages gt 1}" aria-label="Page navigation">
             <ul class="pagination justify-content-center">
               <li class="page-item" th:classappend="${currentPage eq 0} ? 'disabled'">
-                <a class="page-link" th:href="@{/admin/products(page=${currentPage - 1}, size=10, sortBy=${sortBy}, sortDir=${sortDir}, search=${search}, categoryId=${categoryId})}">
+                <a class="page-link" th:href="@{/admin/products(page=${currentPage - 1}, size=10, sortBy=${sortBy}, sortDir=${sortDir}, search=${search}, categoryId=${categoryId}, inactive=${inactive})}">
                   <i class="fas fa-chevron-left"></i>
                 </a>
               </li>
@@ -318,12 +327,12 @@
                   class="page-item"
                   th:classappend="${pageNum eq currentPage} ? 'active'">
                 <a class="page-link"
-                   th:href="@{/admin/products(page=${pageNum}, size=10, sortBy=${sortBy}, sortDir=${sortDir}, search=${search}, categoryId=${categoryId})}"
+                   th:href="@{/admin/products(page=${pageNum}, size=10, sortBy=${sortBy}, sortDir=${sortDir}, search=${search}, categoryId=${categoryId}, inactive=${inactive})}"
                    th:text="${pageNum + 1}">1</a>
               </li>
 
               <li class="page-item" th:classappend="${currentPage eq totalPages - 1} ? 'disabled'">
-                <a class="page-link" th:href="@{/admin/products(page=${currentPage + 1}, size=10, sortBy=${sortBy}, sortDir=${sortDir}, search=${search}, categoryId=${categoryId})}">
+                <a class="page-link" th:href="@{/admin/products(page=${currentPage + 1}, size=10, sortBy=${sortBy}, sortDir=${sortDir}, search=${search}, categoryId=${categoryId}, inactive=${inactive})}">
                   <i class="fas fa-chevron-right"></i>
                 </a>
               </li>
@@ -335,58 +344,140 @@
   </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Xác nhận xóa</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <p>Bạn có chắc chắn muốn xóa sản phẩm này không?</p>
-        <p class="text-danger"><small>Hành động này không thể hoàn tác!</small></p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-        <button type="button" class="btn btn-danger" id="confirmDelete">Xóa</button>
-      </div>
-    </div>
-  </div>
-</div>
+<!-- Delete modal removed -->
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-  let productIdToDelete = null;
+  // Delete actions removed
 
-  function deleteProduct(id) {
-    productIdToDelete = id;
-    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
-    modal.show();
+  function toggleAvailability(id, value) {
+    const confirmMsg = value ? 'Kích hoạt lại sản phẩm này?' : 'Ngưng hiển thị sản phẩm này?';
+    if (!confirm(confirmMsg)) return;
+    fetch(`/admin/products/api/${id}/availability?value=${value}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+            .then(res => res.json())
+            .then(data => {
+              if (data.success) {
+                // Cập nhật ngay trên giao diện, không reload
+                const row = document.querySelector(`tr[data-product-id="${id}"]`);
+                if (row) {
+                  // Badge trạng thái
+                  const badge = row.querySelector(`[data-status-badge="${id}"]`);
+                  if (badge) {
+                    if (value) {
+                      badge.classList.remove('bg-danger');
+                      badge.classList.add('bg-success');
+                      badge.innerHTML = '<i class="fas fa-check me-1"></i><span>Có sẵn</span>';
+                    } else {
+                      badge.classList.remove('bg-success');
+                      badge.classList.add('bg-danger');
+                      badge.innerHTML = '<i class="fas fa-times me-1"></i><span>Hết hàng</span>';
+                    }
+                  }
+
+                  // Nút toggle
+                  const deactivateBtn = row.querySelector(`[data-deactivate-btn="${id}"]`);
+                  const activateBtn = row.querySelector(`[data-activate-btn="${id}"]`);
+                  if (deactivateBtn && activateBtn) {
+                    if (value) { // vừa kích hoạt lại
+                      deactivateBtn.style.display = '';
+                      activateBtn.style.display = 'none';
+                    } else { // vừa ngưng hiển thị
+                      deactivateBtn.style.display = 'none';
+                      activateBtn.style.display = '';
+                    }
+                  }
+                }
+
+                // Nếu trạng thái mới không khớp tab hiện tại, loại bỏ dòng khỏi danh sách hiện tại (không chuyển tab, không reload)
+                const params = new URLSearchParams(window.location.search);
+                const currentInactive = params.get('inactive') === 'true';
+                if (currentInactive !== value) {
+                  // Xóa dòng
+                  row.remove();
+                  // Cập nhật badge tổng số (nếu có)
+                  const totalBadge = document.querySelector('#products-card .card-header .badge');
+                  if (totalBadge) {
+                    const current = parseInt(totalBadge.textContent.trim(), 10);
+                    if (!Number.isNaN(current) && current > 0) {
+                      totalBadge.textContent = String(current - 1);
+                    }
+                  }
+                  // Nếu bảng trống, ẩn bảng/pagination (đơn giản)
+                  const tbody = document.querySelector('#products-tbody');
+                  if (tbody && tbody.children.length === 0) {
+                    const table = tbody.closest('table');
+                    if (table) table.style.display = 'none';
+                    const pagination = document.querySelector('#pagination');
+                    if (pagination) pagination.style.display = 'none';
+                  }
+                }
+              } else {
+                alert('Lỗi: ' + data.message);
+              }
+            })
+            .catch(err => {
+              console.error(err);
+              alert('Có lỗi xảy ra khi cập nhật trạng thái');
+            });
   }
 
-  document.getElementById('confirmDelete').addEventListener('click', function() {
-    if (productIdToDelete) {
-      fetch(`/admin/products/api/delete/${productIdToDelete}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      })
-              .then(response => response.json())
-              .then(data => {
-                if (data.success) {
-                  location.reload();
-                } else {
-                  alert('Lỗi: ' + data.message);
-                }
-              })
-              .catch(error => {
-                console.error('Error:', error);
-                alert('Có lỗi xảy ra khi xóa sản phẩm');
-              });
-    }
-  });
+  function toggleAvailabilityAuto(id) {
+    const row = document.querySelector(`tr[data-product-id="${id}"]`);
+    if (!row) return;
+    const badge = row.querySelector(`[data-status-badge="${id}"]`);
+    const isActive = badge && badge.classList.contains('bg-success');
+    toggleAvailability(id, !isActive);
+  }
+
+  function switchTab(targetInactive, event) {
+    if (event) event.preventDefault();
+    fetchAndRender(targetInactive);
+    return false;
+  }
+
+  function buildUrlWithParams(newInactive) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('inactive', newInactive ? 'true' : 'false');
+    return url.toString();
+  }
+
+  function fetchAndRender(newInactive) {
+    const url = buildUrlWithParams(newInactive);
+    fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const doc = parser.parseFromString(html, 'text/html');
+              const newSection = doc.querySelector('#products-section');
+              const newPagination = doc.querySelector('#pagination');
+              const newTab = newInactive ? doc.querySelector('#tab-inactive') : doc.querySelector('#tab-active');
+              const oldSection = document.querySelector('#products-section');
+              const oldPagination = document.querySelector('#pagination');
+              if (newSection && oldSection) {
+                oldSection.innerHTML = newSection.innerHTML;
+              }
+              if (newPagination && oldPagination) {
+                oldPagination.innerHTML = newPagination.innerHTML;
+                oldPagination.style.display = '';
+              } else if (oldPagination) {
+                oldPagination.style.display = 'none';
+              }
+              // Cập nhật active tab
+              document.querySelector('#tab-active')?.classList.toggle('active', !newInactive);
+              document.querySelector('#tab-inactive')?.classList.toggle('active', newInactive);
+              // Cập nhật hidden input
+              const hidden = document.querySelector('input[name="inactive"]');
+              if (hidden) hidden.value = newInactive ? 'true' : 'false';
+              // Cập nhật URL mà không reload
+              window.history.pushState({}, '', url);
+            })
+            .catch(err => console.error(err));
+  }
 </script>
 </body>
 </html>

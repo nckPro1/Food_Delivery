@@ -252,11 +252,11 @@ public class OrderService {
         // Update actual delivery time if done
         if (newStatus == Order.OrderStatus.DONE) {
             order.setActualDeliveryTime(LocalDateTime.now());
-
+            
             // Tự động set payment status = COMPLETED cho đơn CASH khi DONE
             if (order.getPaymentMethod() == Order.PaymentMethod.CASH) {
                 order.setPaymentStatus(Order.PaymentStatus.COMPLETED);
-
+                
                 // Cập nhật Payment entity
                 List<Payment> payments = paymentRepository.findByOrderOrderId(order.getOrderId());
                 if (!payments.isEmpty()) {

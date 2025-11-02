@@ -73,6 +73,8 @@ public class PaymentService {
             switch (request.getPaymentMethod().toUpperCase()) {
                 case "CASH":
                     return createCashPayment(payment);
+                case "E_WALLET":
+                    return createEWalletPayment(payment);
                 case "VNPAY":
                     return createVnpayPaymentRedirect(payment, request.getIpAddress());
                 default:
@@ -112,6 +114,35 @@ public class PaymentService {
             return ApiResponse.builder()
                     .success(false)
                     .message("Lỗi tạo thanh toán tiền mặt: " + e.getMessage())
+                    .build();
+        }
+    }
+
+    /**
+     * Tạo thanh toán E_WALLET (tự động hoàn thành như CASH)
+     */
+    private ApiResponse<Object> createEWalletPayment(Payment payment) {
+        try {
+            // E_WALLET tự động complete như tiền mặt
+            payment.setPaymentStatus(Payment.PaymentStatus.COMPLETED);
+            payment.setPaymentDate(LocalDateTime.now());
+            payment.setPaymentNotes("Thanh toán qua ví điện tử");
+            paymentRepository.save(payment);
+
+            Order order = payment.getOrder();
+            order.setPaymentStatus(Order.PaymentStatus.COMPLETED);
+            order.setOrderStatus(Order.OrderStatus.DONE);
+            orderRepository.save(order);
+
+            return ApiResponse.builder()
+                    .success(true)
+                    .message("Thanh toán ví điện tử thành công")
+                    .build();
+        } catch (Exception e) {
+            log.error("Error creating E_WALLET payment: ", e);
+            return ApiResponse.builder()
+                    .success(false)
+                    .message("Lỗi tạo thanh toán ví điện tử: " + e.getMessage())
                     .build();
         }
     }

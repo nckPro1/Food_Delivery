@@ -1,295 +1,295 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${pageTitle ?: 'Chi tiết đơn hàng'}">Chi tiết đơn hàng</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${pageTitle ?: 'Chi tiết đơn hàng'}">Chi tiết đơn hàng</title>
+  
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    /* Global Styles */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background-color: #f8f9fa;
+      margin: 0;
+      padding: 0;
+    }
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        /* Global Styles */
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background-color: #f8f9fa;
-            margin: 0;
-            padding: 0;
-        }
+    /* Sidebar Styles (Copy từ trang list) */
+    .sidebar {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1000;
+    }
 
-        /* Sidebar Styles (Copy từ trang list) */
-        .sidebar {
-            min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 1000;
-        }
+    .sidebar .nav-link {
+      color: rgba(255,255,255,0.8);
+      padding: 15px 20px;
+      border-radius: 12px;
+      margin: 6px 15px;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+    }
 
-        .sidebar .nav-link {
-            color: rgba(255,255,255,0.8);
-            padding: 15px 20px;
-            border-radius: 12px;
-            margin: 6px 15px;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-        }
+    .sidebar .nav-link:hover {
+      color: white;
+      background: rgba(255,255,255,0.15);
+      transform: translateX(5px);
+    }
 
-        .sidebar .nav-link:hover {
-            color: white;
-            background: rgba(255,255,255,0.15);
-            transform: translateX(5px);
-        }
+    .sidebar .nav-link.active {
+      color: white;
+      background: rgba(255,255,255,0.2);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
 
-        .sidebar .nav-link.active {
-            color: white;
-            background: rgba(255,255,255,0.2);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
+    /* Header Styles (Copy từ trang list) */
+    .main-header {
+      background: white;
+      padding: 20px 0;
+      border-bottom: 1px solid #e9ecef;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 25px; /* Thêm margin-bottom để tách biệt header và card */
+    }
 
-        /* Header Styles (Copy từ trang list) */
-        .main-header {
-            background: white;
-            padding: 20px 0;
-            border-bottom: 1px solid #e9ecef;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 25px; /* Thêm margin-bottom để tách biệt header và card */
-        }
+    .main-header h1 {
+      color: #2c3e50;
+      font-weight: 600;
+      margin: 0;
+    }
 
-        .main-header h1 {
-            color: #2c3e50;
-            font-weight: 600;
-            margin: 0;
-        }
+    /* Card Style (Dùng chung cho cả list và detail) */
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 32px;
+      border: none; /* Bỏ border mặc định */
+    }
+    .card-body { padding: 32px; }
 
-        /* Card Style (Dùng chung cho cả list và detail) */
-        .card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 32px;
-            border: none; /* Bỏ border mặc định */
-        }
-        .card-body { padding: 32px; }
+    /* Table Styles (Copy từ trang list) */
+    .table {
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
 
-        /* Table Styles (Copy từ trang list) */
-        .table {
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
+    .table th {
+      background-color: #f8f9fa;
+      border-bottom: 2px solid #dee2e6;
+      font-weight: 600;
+    }
 
-        .table th {
-            background-color: #f8f9fa;
-            border-bottom: 2px solid #dee2e6;
-            font-weight: 600;
-        }
+    .table td {
+      vertical-align: middle;
+    }
 
-        .table td {
-            vertical-align: middle;
-        }
+    /* Payment Status Badges (Copy từ trang list) */
+    .payment-badge {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      display: inline-block;
+    }
 
-        /* Payment Status Badges (Copy từ trang list) */
-        .payment-badge {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            display: inline-block;
-        }
+    .payment-pending { background-color: #fff3cd; color: #856404; }
+    .payment-completed { background-color: #d4edda; color: #155724; }
+    .payment-failed { background-color: #f8d7da; color: #721c24; }
+    .payment-refunded { background-color: #d1ecf1; color: #0c5460; }
 
-        .payment-pending { background-color: #fff3cd; color: #856404; }
-        .payment-completed { background-color: #d4edda; color: #155724; }
-        .payment-failed { background-color: #f8d7da; color: #721c24; }
-        .payment-refunded { background-color: #d1ecf1; color: #0c5460; }
-
-        /* Payment Method Badges (Copy từ trang list) */
-        .method-badge {
-            padding: 4px 10px;
-            border-radius: 15px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            display: inline-block;
-        }
-        /* Thêm các class method từ trang list để đồng bộ */
-        .method-cash { background-color: #e7f3ff; color: #004085; }
-        .method-e_wallet { background-color: #f3e5f5; color: #4a148c; }
-        .method-card { background-color: #fff3e0; color: #e65100; }
-        /* Class dự phòng từ file detail cũ */
-        .method-default { background-color: #e7f3ff; color: #004085; }
-
-
-        /* Status Badges (Copy từ trang list) */
-        .status-badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 500;
-        }
-
-        .status-pending { background-color: #fff3cd; color: #856404; }
-        .status-confirmed { background-color: #d1ecf1; color: #0c5460; }
-        .status-delivering { background-color: #cce5ff; color: #004085; }
-        .status-done { background-color: #d4edda; color: #155724; }
-        .status-cancelled { background-color: #f8d7da; color: #721c24; } /* Thêm status cancelled */
+    /* Payment Method Badges (Copy từ trang list) */
+    .method-badge {
+      padding: 4px 10px;
+      border-radius: 15px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      display: inline-block;
+    }
+    /* Thêm các class method từ trang list để đồng bộ */
+    .method-cash { background-color: #e7f3ff; color: #004085; }
+    .method-e_wallet { background-color: #f3e5f5; color: #4a148c; }
+    .method-card { background-color: #fff3e0; color: #e65100; }
+    /* Class dự phòng từ file detail cũ */
+    .method-default { background-color: #e7f3ff; color: #004085; }
 
 
-        /* Button Styles (Copy từ trang list) */
-        .btn {
-            border-radius: 8px;
-            padding: 8px 16px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
+    /* Status Badges (Copy từ trang list) */
+    .status-badge {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
 
-        /* Các style bổ sung từ file detail gốc */
-        .order-label {
-            color: #6c757d;
-            font-weight: 500;
-            min-width: 130px;
-            display: inline-block;
-        }
-        .fw-bold { font-weight: 600 !important; } /* Thêm !important để ghi đè nếu cần */
-        .fs-5 { font-size: 1.15rem; }
-        .summary-grand {
-            border-top: 2px solid #ececec;
-            margin-top: 12px;
-            padding-top: 8px;
-            font-size: 1.17em;
-        }
-        .product-image-order {
-            width: 48px;
-            height: 48px;
-            object-fit: cover;
-            border-radius: 8px;
-            background: #f2f2f2;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-        }
-    </style>
+    .status-pending { background-color: #fff3cd; color: #856404; }
+    .status-confirmed { background-color: #d1ecf1; color: #0c5460; }
+    .status-delivering { background-color: #cce5ff; color: #004085; }
+    .status-done { background-color: #d4edda; color: #155724; }
+    .status-cancelled { background-color: #f8d7da; color: #721c24; } /* Thêm status cancelled */
+
+
+    /* Button Styles (Copy từ trang list) */
+    .btn {
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    /* Các style bổ sung từ file detail gốc */
+    .order-label {
+      color: #6c757d;
+      font-weight: 500;
+      min-width: 130px;
+      display: inline-block;
+    }
+    .fw-bold { font-weight: 600 !important; } /* Thêm !important để ghi đè nếu cần */
+    .fs-5 { font-size: 1.15rem; }
+    .summary-grand {
+      border-top: 2px solid #ececec;
+      margin-top: 12px;
+      padding-top: 8px;
+      font-size: 1.17em;
+    }
+    .product-image-order {
+      width: 48px;
+      height: 48px;
+      object-fit: cover;
+      border-radius: 8px;
+      background: #f2f2f2;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+  </style>
 </head>
 <body>
 
 <div class="container-fluid">
-    <div class="row">
-        <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
+  <div class="row">
+    <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
 
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+      
+      <div class="main-header">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center">
+          <h1>
+            <i class="fas fa-receipt me-2 text-primary"></i>
+            <span th:text="${pageTitle ?: 'Chi tiết đơn hàng'}">Chi tiết đơn hàng</span>
+          </h1>
+        </div>
+      </div>
 
-            <div class="main-header">
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center">
-                    <h1>
-                        <i class="fas fa-receipt me-2 text-primary"></i>
-                        <span th:text="${pageTitle ?: 'Chi tiết đơn hàng'}">Chi tiết đơn hàng</span>
-                    </h1>
-                </div>
+      <div class="card">
+        <div class="card-body">
+          <div class="row mb-4">
+            <div class="col-md-7">
+              <div class="mb-2"><span class="order-label">Mã đơn hàng:</span> <strong th:text="${order.orderNumber}">ORD-XXX</strong></div>
+              <div class="mb-2">
+                <span class="order-label">Khách hàng:</span> 
+                <span th:text="${order.userFullName}"></span> 
+                <span th:if="${order.userPhone}">| <i class="fas fa-phone-alt fa-fw"></i> <span th:text="${order.userPhone}"></span></span>
+              </div>
+              <div class="mb-2"><span class="order-label">Địa chỉ giao hàng:</span> <span th:text="${order.deliveryAddress}"></span></div>
+              <div class="mb-2" th:if="${order.deliveryNotes}"><span class="order-label">Ghi chú:</span> <span th:text="${order.deliveryNotes}"></span></div>
             </div>
-
-            <div class="card">
-                <div class="card-body">
-                    <div class="row mb-4">
-                        <div class="col-md-7">
-                            <div class="mb-2"><span class="order-label">Mã đơn hàng:</span> <strong th:text="${order.orderNumber}">ORD-XXX</strong></div>
-                            <div class="mb-2">
-                                <span class="order-label">Khách hàng:</span>
-                                <span th:text="${order.userFullName}"></span>
-                                <span th:if="${order.userPhone}">| <i class="fas fa-phone-alt fa-fw"></i> <span th:text="${order.userPhone}"></span></span>
-                            </div>
-                            <div class="mb-2"><span class="order-label">Địa chỉ giao hàng:</span> <span th:text="${order.deliveryAddress}"></span></div>
-                            <div class="mb-2" th:if="${order.deliveryNotes}"><span class="order-label">Ghi chú:</span> <span th:text="${order.deliveryNotes}"></span></div>
-                        </div>
-                        <div class="col-md-5">
-                            <div class="mb-2">
-                                <span class="order-label">Trạng thái:</span>
-                                <span class="status-badge status-[[${order.orderStatus.name().toLowerCase()}]]"
-                                      th:text="${order.getOrderStatusDisplay()}"></span>
-                            </div>
-                            <div class="mb-2">
-                                <span class="order-label">P. thức TT:</span>
-                                <span class="method-badge method-[[${order.paymentMethod.name().toLowerCase()}]]"
-                                      th:text="${order.getPaymentMethodDisplay()}"></span>
-                            </div>
-                            <div class="mb-2">
-                                <span class="order-label">TT thanh toán:</span>
-                                <span class="payment-badge payment-[[${order.paymentStatus.name().toLowerCase()}]]"
-                                      th:text="${order.getPaymentStatusDisplay()}"></span>
-                            </div>
-                            <div class="mb-2">
-                                <span class="order-label">Ngày tạo:</span>
-                                <span th:text="${order.formattedCreatedAt ?: #temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <h5 class="fw-bold mb-3">Danh sách sản phẩm</h5>
-
-                    <div class="table-responsive mb-3">
-                        <table class="table table-striped table-hover align-middle">
-                            <thead class="table-light">
-                            <tr>
-                                <th>#</th>
-                                <th>Ảnh</th>
-                                <th>Tên SP</th>
-                                <th class="text-center">Số lượng</th>
-                                <th class="text-end">Đơn giá</th>
-                                <th class="text-end">Tổng</th>
-                                <th class="text-center">Ghi chú</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr th:each="item, idx : ${order.orderItems}">
-                                <td th:text="${idx.index + 1}"></td>
-                                <td>
-                                    <img th:src="${item.productImageUrl != null ? item.productImageUrl : '/static/images/default-product.jpg'}" th:alt="${item.productName}" class="product-image-order" onerror="this.onerror=null;this.src='/static/images/default-product.jpg';" />
-                                </td>
-                                <td th:text="${item.productName}"></td>
-                                <td class="text-center" th:text="${item.quantity}"></td>
-                                <td class="text-end" th:text="${#numbers.formatDecimal(item.unitPrice,0,'COMMA',0,'POINT')} + ' ₫'"></td>
-                                <td class="text-end" th:text="${#numbers.formatDecimal(item.totalPrice,0,'COMMA',0,'POINT')} + ' ₫'"></td>
-                                <td class="text-center" th:text="${item.specialInstructions ?: '-'}"></td>
-                            </tr>
-                            <tr th:if="${order.orderItems == null || order.orderItems.isEmpty()}">
-                                <td colspan="7" class="text-center text-muted">Không có sản phẩm nào</td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="row mt-4 g-2">
-                        <div class="col-md-6"></div> <div class="col-md-6">
-                        <div class="d-flex justify-content-between mb-2">
-                            <span><strong>Tổng tiền hàng:</strong></span>
-                            <span th:text="${#numbers.formatDecimal(order.totalAmount,0,'COMMA',0,'POINT')} + ' ₫'"></span>
-                        </div>
-                        <div class="d-flex justify-content-between mb-2">
-                            <span><strong>Phí giao hàng:</strong></span>
-                            <span th:text="${#numbers.formatDecimal(order.shippingFee,0,'COMMA',0,'POINT')} + ' ₫'"></span>
-                        </div>
-                        <div class="d-flex justify-content-between mb-2" th:if="${order.couponDiscount != null && order.couponDiscount > 0}">
-                            <span><strong>Giảm giá:</strong></span>
-                            <span class="text-success" th:text="'-'+#numbers.formatDecimal(order.couponDiscount,0,'COMMA',0,'POINT') + ' ₫'"></span>
-                        </div>
-                        <div class="d-flex justify-content-between summary-grand">
-                            <span><strong>Khách trả:</strong></span>
-                            <span class="text-primary fs-5 fw-bold" th:text="${#numbers.formatDecimal(order.finalAmount,0,'COMMA',0,'POINT')} + ' ₫'"></span>
-                        </div>
-                    </div>
-                    </div>
-
-                    <div class="mt-4">
-                        <a href="/admin/orders" class="btn btn-outline-secondary">
-                            <i class="fas fa-arrow-left me-1"></i> Quay lại danh sách
-                        </a>
-                    </div>
-
-                </div>
+            <div class="col-md-5">
+              <div class="mb-2">
+                <span class="order-label">Trạng thái:</span>
+                <span class="status-badge status-[[${order.orderStatus.name().toLowerCase()}]]" 
+                      th:text="${order.getOrderStatusDisplay()}"></span>
+              </div>
+              <div class="mb-2">
+                <span class="order-label">P. thức TT:</span>
+                <span class="method-badge method-[[${order.paymentMethod.name().toLowerCase()}]]" 
+                      th:text="${order.getPaymentMethodDisplay()}"></span>
+              </div>
+              <div class="mb-2">
+                <span class="order-label">TT thanh toán:</span>
+                <span class="payment-badge payment-[[${order.paymentStatus.name().toLowerCase()}]]" 
+                      th:text="${order.getPaymentStatusDisplay()}"></span>
+              </div>
+              <div class="mb-2">
+                <span class="order-label">Ngày tạo:</span> 
+                <span th:text="${order.formattedCreatedAt ?: #temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"></span>
+              </div>
             </div>
-        </main>
-    </div>
+          </div>
+          
+          <h5 class="fw-bold mb-3">Danh sách sản phẩm</h5>
+          
+          <div class="table-responsive mb-3">
+            <table class="table table-striped table-hover align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>#</th>
+                  <th>Ảnh</th>
+                  <th>Tên SP</th>
+                  <th class="text-center">Số lượng</th>
+                  <th class="text-end">Đơn giá</th>
+                  <th class="text-end">Tổng</th>
+                  <th class="text-center">Ghi chú</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="item, idx : ${order.orderItems}">
+                  <td th:text="${idx.index + 1}"></td>
+                  <td>
+                    <img th:src="${item.productImageUrl != null ? item.productImageUrl : '/static/images/default-product.jpg'}" th:alt="${item.productName}" class="product-image-order" onerror="this.onerror=null;this.src='/static/images/default-product.jpg';" />
+                  </td>
+                  <td th:text="${item.productName}"></td>
+                  <td class="text-center" th:text="${item.quantity}"></td>
+                  <td class="text-end" th:text="${#numbers.formatDecimal(item.unitPrice,0,'COMMA',0,'POINT')} + ' ₫'"></td>
+                  <td class="text-end" th:text="${#numbers.formatDecimal(item.totalPrice,0,'COMMA',0,'POINT')} + ' ₫'"></td>
+                  <td class="text-center" th:text="${item.specialInstructions ?: '-'}"></td>
+                </tr>
+                <tr th:if="${order.orderItems == null || order.orderItems.isEmpty()}">
+                  <td colspan="7" class="text-center text-muted">Không có sản phẩm nào</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <div class="row mt-4 g-2">
+            <div class="col-md-6"></div> <div class="col-md-6">
+              <div class="d-flex justify-content-between mb-2">
+                <span><strong>Tổng tiền hàng:</strong></span>
+                <span th:text="${#numbers.formatDecimal(order.totalAmount,0,'COMMA',0,'POINT')} + ' ₫'"></span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span><strong>Phí giao hàng:</strong></span>
+                <span th:text="${#numbers.formatDecimal(order.shippingFee,0,'COMMA',0,'POINT')} + ' ₫'"></span>
+              </div>
+              <div class="d-flex justify-content-between mb-2" th:if="${order.couponDiscount != null && order.couponDiscount > 0}">
+                <span><strong>Giảm giá:</strong></span>
+                <span class="text-success" th:text="'-'+#numbers.formatDecimal(order.couponDiscount,0,'COMMA',0,'POINT') + ' ₫'"></span>
+              </div>
+              <div class="d-flex justify-content-between summary-grand">
+                <span><strong>Khách trả:</strong></span>
+                <span class="text-primary fs-5 fw-bold" th:text="${#numbers.formatDecimal(order.finalAmount,0,'COMMA',0,'POINT')} + ' ₫'"></span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="mt-4">
+            <a href="/admin/orders" class="btn btn-outline-secondary">
+              <i class="fas fa-arrow-left me-1"></i> Quay lại danh sách
+            </a>
+          </div>
+          
+        </div>
+      </div>
+    </main>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>

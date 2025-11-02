@@ -25,7 +25,8 @@ public class UserService implements UserDetailsService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
 
-        String role = user.getRoleId() == 2 ? "ROLE_ADMIN" : "ROLE_USER";
+        // roleId = 1 là ADMIN, roleId = 2 là USER (theo database)
+        String role = user.getRoleId() == 1 ? "ROLE_ADMIN" : "ROLE_USER";
 
         return new org.springframework.security.core.userdetails.User(
                 user.getEmail(),

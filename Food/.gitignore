@@ -35,3 +35,13 @@ build/
 # Ignore application.properties or any other properties file in the resources directory
 src/main/resources/application.properties
 src/test/resources/application.properties
+
+# Firebase Service Account Key (chứa thông tin nhạy cảm)
+firebase-service-account-key.json
+**/firebase-service-account-key.json
+# File service account key thực tế từ Firebase
+foodapp-4da5f-firebase-adminsdk-fbsvc-784b66fa15.json
+**/foodapp-4da5f-firebase-adminsdk-fbsvc-784b66fa15.json
+# Pattern chung cho các file Firebase service account key (phòng trường hợp có file khác)
+**/*firebase*admin*.json
+**/*-firebase-adminsdk-*.json
