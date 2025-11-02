@@ -96,7 +96,7 @@ public class AdminAuthController {
                     .password(passwordEncoder.encode(password))
                     .fullName(fullName)
                     .phoneNumber(phoneNumber)
-                    .roleId(2) // Admin role
+                    .roleId(1) // Admin role = 1, User role = 2 (theo database)
                     .build();
 
             userService.saveUser(adminUser);
@@ -120,5 +120,28 @@ public class AdminAuthController {
         request.getSession().invalidate();
         log.info("Admin đã đăng xuất");
         return "redirect:/admin/auth/login";
+    }
+
+    /**
+     * Endpoint tạm thời để fix roleId của admin
+     * TODO: Xóa endpoint này sau khi đã fix xong
+     */
+    @GetMapping("/fix-admin-role")
+    public String fixAdminRole(@RequestParam String email, Model model) {
+        try {
+            User user = userService.getUserByEmail(email);
+            if (user != null) {
+                user.setRoleId(1); // Set role = ADMIN (Admin = 1, User = 2 - theo database)
+                userService.saveUser(user);
+                log.info("Đã cập nhật roleId của user {} thành ADMIN (roleId=1)", email);
+                model.addAttribute("success", "Đã cập nhật roleId thành công!");
+            } else {
+                model.addAttribute("error", "Không tìm thấy user với email: " + email);
+            }
+        } catch (Exception e) {
+            log.error("Lỗi khi fix admin role: {}", e.getMessage());
+            model.addAttribute("error", "Lỗi: " + e.getMessage());
+        }
+        return "admin/auth/login";
     }
 }

@@ -68,6 +68,12 @@
           </a>
         </li>
         <li class="nav-item">
+          <a class="nav-link" href="/admin/chat" th:classappend="${#strings.startsWith(pageTitle, 'Quản lý Chat') or #strings.startsWith(pageTitle, 'Chat với')} ? 'active' : ''">
+            <i class="fas fa-comments me-2"></i>
+            Chat
+          </a>
+        </li>
+        <li class="nav-item">
           <a class="nav-link" href="/admin/store-settings" th:classappend="${#strings.startsWith(pageTitle, 'Cài đặt nhà hàng')} ? 'active' : ''">
             <i class="fas fa-store me-2"></i>
             Cài đặt nhà hàng

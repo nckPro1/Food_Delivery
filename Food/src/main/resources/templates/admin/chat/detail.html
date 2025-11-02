@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle}">Chat Detail</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* GLOBAL & BASE STYLES (DASHBOARD CONSISTENCY) */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Sidebar Styles - Gradient Theme */
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* GRADIENT! */
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+        }
+
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin: 6px 15px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+        }
+
+        .sidebar .nav-link:hover {
+            color: white;
+            background: rgba(255,255,255,0.15);
+            transform: translateX(5px);
+        }
+
+        .sidebar .nav-link.active {
+            color: white;
+            background: rgba(255,255,255,0.2);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .sidebar .nav-link i {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 0;
+            padding-top: 20px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: relative;
+                min-height: auto;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+        /* END OF GLOBAL STYLES */
+
+
+        /* CHAT-SPECIFIC STYLES (THEMED) */
+        .chat-container {
+            height: calc(100vh - 120px); /* Adjusted height for new header/padding */
+            display: flex;
+            flex-direction: column;
+        }
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08); /* Added shadow for consistency */
+        }
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+        }
+        .message.own {
+            justify-content: flex-end;
+        }
+        .message.received {
+            justify-content: flex-start;
+        }
+        .message-bubble {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            word-wrap: break-word;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .message.own .message-bubble {
+            background: #764ba2; /* Tím đậm từ gradient */
+            color: white;
+            border-bottom-right-radius: 4px; /* Thiết kế "cắn góc" */
+        }
+        .message.received .message-bubble {
+            background: #E0E0E0;
+            color: #333;
+            border-bottom-left-radius: 4px; /* Thiết kế "cắn góc" */
+        }
+        .message-time {
+            font-size: 11px;
+            color: rgba(255,255,255,0.7); /* Màu nhạt cho tin nhắn của admin */
+            margin-top: 4px;
+            text-align: right;
+        }
+        .message.received .message-time {
+            color: #999;
+            text-align: left;
+        }
+        .input-area {
+            background: white;
+            padding: 15px;
+            border-radius: 8px; /* Consistency */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); /* Stronger shadow for input area */
+        }
+        #messageInput {
+            border-radius: 24px;
+            border: 1px solid #ddd;
+            padding: 10px 20px;
+            transition: all 0.3s ease;
+        }
+        #messageInput:focus {
+            border-color: #667eea; /* Màu xanh tím nhạt từ gradient cho focus */
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        .send-btn {
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            background: #667eea; /* Màu xanh tím nhạt từ gradient cho nút gửi */
+            border: none;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 6px rgba(102, 126, 234, 0.4);
+        }
+        .send-btn:hover {
+            background: #764ba2; /* Hover effect */
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <div th:replace="~{admin/fragments/sidebar :: sidebar}" class="col-md-3 col-lg-2 d-md-block sidebar collapse"></div>
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+            <div class="d-flex justify-content-between align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <div>
+                    <a href="/admin/chat" class="btn btn-outline-secondary btn-sm mb-2" style="border-radius: 8px;">
+                        <i class="fas fa-arrow-left me-1"></i> Quay lại
+                    </a>
+                    <h2 class="h4 mb-0" style="color: #2c3e50; font-weight: 600;">
+                        <i class="fas fa-comments me-2 text-primary"></i>
+                        <span th:text="${conversation.createdByName}">Tên Khách Hàng</span>
+                    </h2>
+                </div>
+            </div>
+
+            <div class="chat-container">
+                <div class="messages-area" id="messagesArea">
+                    <div id="emptyState" th:if="${messages == null || messages.isEmpty()}" class="text-center text-muted py-5">
+                        <i class="fas fa-comment-dots fa-3x mb-3"></i>
+                        <p>Chưa có tin nhắn nào.</p>
+                    </div>
+
+                    <div th:each="msg : ${messages}"
+                         class="message message-item"
+                         th:classappend="${msg.isOwnMessage} ? 'own' : 'received'"
+                         th:attr="data-message-id=${msg.messageId}">
+                        <div class="message-bubble">
+                            <div th:text="${msg.content}"></div>
+                            <div class="message-time" th:classappend="${msg.isOwnMessage} ? '' : 'text-secondary'" th:text="${#temporals.format(msg.createdAt, 'HH:mm')}"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-area">
+                    <form id="messageForm">
+                        <div class="input-group">
+                            <input type="text"
+                                   class="form-control"
+                                   id="messageInput"
+                                   placeholder="Nhập tin nhắn..."
+                                   autocomplete="off">
+                            <button type="button" class="btn send-btn" id="sendBtn" title="Gửi tin nhắn">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+<script th:inline="javascript">
+    // Get values from Thymeleaf
+    /*<![CDATA[*/
+    const conversationId = /*[[${conversationId}]]*/ null;
+    const adminId = /*[[${adminId}]]*/ null;
+
+    // Validate conversationId
+    if (!conversationId) {
+        alert('Lỗi: Không tìm thấy ID cuộc trò chuyện');
+    }
+    /*]]>*/
+
+    // Get elements
+    const messageForm = document.getElementById('messageForm');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const messagesArea = document.getElementById('messagesArea');
+    const emptyStateElement = document.getElementById('emptyState');
+
+    // Auto scroll to bottom
+    function scrollToBottom() {
+        setTimeout(() => {
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+        }, 50);
+    }
+    scrollToBottom(); // Initial scroll
+
+    // Escape HTML function
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Send message function (using fetch/REST API through backend)
+    async function sendMessage() {
+        const content = messageInput.value.trim();
+        if (!content) return;
+
+        const currentConversationId = conversationId;
+        if (!currentConversationId) {
+            alert('Lỗi: Không tìm thấy ID cuộc trò chuyện');
+            return;
+        }
+
+        messageInput.disabled = true;
+        sendBtn.disabled = true;
+
+        try {
+            const url = `/admin/chat/${currentConversationId}/send`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ content: content })
+            });
+
+            const data = await response.json();
+
+            if (data.success && data.data) {
+                messageInput.value = '';
+
+                // OPTIMISTIC UPDATE: Message is added immediately via Firebase Listener
+                // We rely on the Firebase listener to add the message now that the backend has pushed it.
+                // The backend must return the full message object including messageId.
+
+            } else {
+                alert('Lỗi: ' + (data.message || 'Không thể gửi tin nhắn'));
+            }
+        } catch (error) {
+            alert('Lỗi: ' + error.message);
+        } finally {
+            messageInput.disabled = false;
+            sendBtn.disabled = false;
+            messageInput.focus();
+        }
+    }
+
+    // Track existing message IDs to avoid duplicates from Firebase listener
+    const existingMessageIds = new Set();
+
+    // Initialize existing message IDs from DOM
+    document.querySelectorAll('.message-item').forEach(msg => {
+        const msgId = msg.getAttribute('data-message-id');
+        if (msgId) {
+            // Note: Since Thymeleaf IDs might be numbers or strings, convert to string for consistency in Set
+            existingMessageIds.add(msgId.toString());
+        }
+    });
+
+    // Initialize Firebase
+    const firebaseConfig = {
+        databaseURL: "https://foodapp-4da5f-default-rtdb.asia-southeast1.firebasedatabase.app"
+    };
+
+    if (!firebase.apps || firebase.apps.length === 0) {
+        firebase.initializeApp(firebaseConfig);
+    }
+
+    const database = firebase.database();
+
+    // Function to handle adding or updating message to DOM
+    function processMessageData(messageData, isUpdate) {
+        if (!messageData || !messageData.messageId) return;
+
+        const messageId = messageData.messageId.toString();
+
+        if (!isUpdate && existingMessageIds.has(messageId)) return;
+
+        existingMessageIds.add(messageId);
+
+        // Determine isOwnMessage from admin's perspective (senderUserId is a server-provided identifier)
+        // If senderUserId matches adminId, it's admin's message (own)
+        const isOwnMessage = messageData.senderUserId && adminId &&
+            (messageData.senderUserId.toString() === adminId.toString());
+
+        let existingMsg = messagesArea.querySelector(`[data-message-id="${messageId}"]`);
+
+        // Format time from timestamp
+        let timeStr = '';
+        if (messageData.createdAt) {
+            const date = new Date(messageData.createdAt);
+            timeStr = date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        const messageContentHTML = `
+            <div class="message-bubble">
+                <div>${escapeHtml(messageData.content || '')}</div>
+                <div class="message-time">${timeStr}</div>
+            </div>
+        `;
+
+        if (existingMsg) {
+            // Update mode
+            existingMsg.className = `message message-item ${isOwnMessage ? 'own' : 'received'}`;
+            existingMsg.innerHTML = messageContentHTML;
+        } else {
+            // Add mode (new message)
+            if (emptyStateElement) emptyStateElement.style.display = 'none';
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message message-item ${isOwnMessage ? 'own' : 'received'}`;
+            messageDiv.setAttribute('data-message-id', messageId);
+            messageDiv.innerHTML = messageContentHTML;
+
+            messagesArea.appendChild(messageDiv);
+            scrollToBottom();
+        }
+    }
+
+    // Listen to Firebase for real-time messages
+    function setupFirebaseListener() {
+        if (!conversationId) return;
+
+        const messagesRef = database.ref(`conversations/${conversationId}/messages`);
+
+        // Listen for new messages
+        messagesRef.on('child_added', (snapshot) => {
+            processMessageData(snapshot.val(), false);
+        });
+
+        // Listen for message updates
+        messagesRef.on('child_changed', (snapshot) => {
+            processMessageData(snapshot.val(), true);
+        });
+    }
+
+    // Event listeners
+    sendBtn.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    // Setup Firebase listener after page load
+    setTimeout(setupFirebaseListener, 500);
+</script>
+</body>
+</html>

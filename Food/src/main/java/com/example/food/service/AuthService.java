@@ -69,7 +69,7 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setFullName(request.getFullName());
         user.setPhoneNumber(request.getPhoneNumber());
-        user.setRoleId(1); // Default USER role
+        user.setRoleId(2); // Default USER role (Admin = 1, User = 2 theo database)
         user.setAuthProvider(AuthProvider.EMAIL); // Set auth provider
 
         // Don't save user yet, wait for OTP verification
@@ -122,7 +122,7 @@ public class AuthService {
             user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
             user.setFullName(registerRequest.getFullName());
             user.setPhoneNumber(registerRequest.getPhoneNumber());
-            user.setRoleId(1);
+            user.setRoleId(2); // Default USER role (Admin = 1, User = 2 theo database)
             user.setAuthProvider(AuthProvider.EMAIL); // Set auth provider
         }
 
