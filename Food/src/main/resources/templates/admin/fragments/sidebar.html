@@ -1,9 +1,39 @@
 <!-- Sidebar Fragment -->
 <div th:fragment="sidebar">
+  <style>
+    .sidebar {
+      height: 100vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .sidebar::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .sidebar::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .sidebar::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 3px;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    .sidebar-content {
+      padding: 20px 0;
+      min-height: 100%;
+    }
+  </style>
+
   <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
-    <div class="position-sticky pt-3">
+    <div class="sidebar-content">
       <!-- Logo/Brand -->
-      <div class="text-center mb-4">
+      <div class="text-center mb-4 px-3">
         <h4 class="text-white mb-0">
           <i class="fas fa-utensils me-2"></i>
           Food Admin
@@ -71,6 +101,12 @@
           <a class="nav-link" href="/admin/chat" th:classappend="${#strings.startsWith(pageTitle, 'Quản lý Chat') or #strings.startsWith(pageTitle, 'Chat với')} ? 'active' : ''">
             <i class="fas fa-comments me-2"></i>
             Chat
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/admin/notifications" th:classappend="${#strings.startsWith(pageTitle, 'Thông báo')} ? 'active' : ''">
+            <i class="fas fa-bell me-2"></i>
+            Thông báo
           </a>
         </li>
         <li class="nav-item">

@@ -1,6 +1,7 @@
 package com.example.food.controller;
 
 import com.example.food.dto.ApiResponse;
+import com.example.food.dto.CommentDTO;
 import com.example.food.dto.CreateCommentRequest;
 import com.example.food.dto.CreateOrUpdateReviewRequest;
 import com.example.food.dto.ReviewDTO;
@@ -118,23 +119,27 @@ public class ReviewController {
     // ===============================
 
     @GetMapping("/products/{productId}/comments")
-    public ResponseEntity<ApiResponse<Page<String>>> listComments(
+    public ResponseEntity<ApiResponse<Page<CommentDTO>>> listComments(
             @PathVariable Long productId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         try {
             Pageable pageable = PageRequest.of(page, size);
             Page<ProductReviewComment> comments = reviewService.listComments(productId, pageable);
-            // Keep simple: return raw JSON strings combined; in real app create a proper DTO
-            Page<String> data = comments.map(c -> c.getContent());
-            return ResponseEntity.ok(ApiResponse.<Page<String>>builder()
+            log.info("Found {} comments for productId={}", comments.getTotalElements(), productId);
+
+            Page<CommentDTO> dtoPage = comments.map(this::commentToDTO);
+            log.info("Converted to {} DTOs, first DTO: {}", dtoPage.getTotalElements(),
+                    dtoPage.getContent().isEmpty() ? "empty" : dtoPage.getContent().get(0));
+
+            return ResponseEntity.ok(ApiResponse.<Page<CommentDTO>>builder()
                     .success(true)
                     .message("Comments retrieved")
-                    .data(data)
+                    .data(dtoPage)
                     .build());
         } catch (Exception e) {
             log.error("Error listComments productId={}", productId, e);
-            return ResponseEntity.badRequest().body(ApiResponse.<Page<String>>builder()
+            return ResponseEntity.badRequest().body(ApiResponse.<Page<CommentDTO>>builder()
                     .success(false)
                     .message(e.getMessage())
                     .build());
@@ -147,10 +152,22 @@ public class ReviewController {
             @RequestParam Long userId,
             @RequestBody CreateCommentRequest request) {
         try {
+            // Tự động tìm reviewId của user nếu không được cung cấp
+            Long reviewId = request.getReviewId();
+            if (reviewId == null) {
+                // Tìm review mới nhất của user cho product này
+                Page<ProductReview> userReviews = reviewService.listReviews(productId, PageRequest.of(0, 10));
+                reviewId = userReviews.getContent().stream()
+                        .filter(r -> r.getUserId().equals(userId))
+                        .findFirst()
+                        .map(ProductReview::getReviewId)
+                        .orElse(null);
+            }
+
             ProductReviewComment saved = reviewService.createComment(
                     productId,
                     userId,
-                    request.getReviewId(),
+                    reviewId,
                     request.getContent(),
                     request.getAttachmentUrls()
             );
@@ -192,6 +209,22 @@ public class ReviewController {
                 .adminRepliedAt(r.getAdminRepliedAt())
                 .createdAt(r.getCreatedAt())
                 .updatedAt(r.getUpdatedAt())
+                .build();
+    }
+
+    private CommentDTO commentToDTO(ProductReviewComment c) {
+        String userName = reviewService.resolveUserName(c.getUserId());
+        String userAvatarUrl = reviewService.resolveUserAvatarUrl(c.getUserId());
+        return CommentDTO.builder()
+                .commentId(c.getCommentId())
+                .productId(c.getProductId())
+                .userId(c.getUserId())
+                .reviewId(c.getReviewId())
+                .content(c.getContent())
+                .userName(userName)
+                .userAvatarUrl(userAvatarUrl)
+                .createdAt(c.getCreatedAt())
+                .updatedAt(c.getUpdatedAt())
                 .build();
     }
 }

@@ -475,10 +475,11 @@
                   <label class="form-label">
                     <i class="fas fa-list"></i>Danh mục
                   </label>
-                  <select class="form-select" th:field="*{category.categoryId}" required>
+                  <select class="form-select" name="categoryId" id="categoryId" required>
                     <option value="">Chọn danh mục</option>
                     <option th:each="category : ${categories}"
                             th:value="${category.categoryId}"
+                            th:selected="${product.category != null && product.category.categoryId == category.categoryId}"
                             th:text="${category.categoryName}">
                       Danh mục
                     </option>

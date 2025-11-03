@@ -189,23 +189,35 @@ public class VnpayService {
         try {
             Payment payment = paymentRepository.findByTransactionId(txnRef).orElse(null);
             if (payment != null) {
+                Order order = payment.getOrder();
                 boolean ok = "00".equals(responseCode) && "00".equals(txnStatus);
                 if (ok) {
                     payment.setPaymentStatus(Payment.PaymentStatus.COMPLETED);
-                    payment.getOrder().setPaymentStatus(Order.PaymentStatus.COMPLETED);
-                    // Mark order as DONE for delivery flow
-                    payment.getOrder().setOrderStatus(Order.OrderStatus.DONE);
+                    order.setPaymentStatus(Order.PaymentStatus.COMPLETED);
+
+                    // QUAN TRỌNG: Chỉ set payment status = COMPLETED, KHÔNG thay đổi order status
+                    // Order status phải giữ nguyên PENDING (chờ xử lý) để admin xử lý đơn hàng
+                    // Nếu order status đã bị thay đổi, set lại về PENDING
+                    if (order.getOrderStatus() != Order.OrderStatus.PENDING) {
+                        log.warn("Order {} had status {} but should be PENDING for VNPay payment. Resetting to PENDING.",
+                                order.getOrderId(), order.getOrderStatus());
+                        order.setOrderStatus(Order.OrderStatus.PENDING);
+                    }
                 } else {
                     payment.setPaymentStatus(Payment.PaymentStatus.FAILED);
-                    payment.getOrder().setPaymentStatus(Order.PaymentStatus.FAILED);
+                    order.setPaymentStatus(Order.PaymentStatus.FAILED);
                 }
 
                 payment.setPaymentNotes("VNPay response: " + responseCode + " - " + txnStatus);
                 paymentRepository.save(payment);
-                orderRepository.save(payment.getOrder());
+                orderRepository.save(order);
 
-                log.info("Updated payment status for txnRef: {} to status: {}", txnRef,
-                        (ok ? "COMPLETED" : "FAILED"));
+                if (ok) {
+                    log.info("VNPay payment completed for order {}. Payment status: COMPLETED, Order status: {} (PENDING)",
+                            order.getOrderId(), order.getOrderStatus());
+                } else {
+                    log.info("Updated payment status for txnRef: {} to status: FAILED", txnRef);
+                }
             }
 
         } catch (Exception e) {

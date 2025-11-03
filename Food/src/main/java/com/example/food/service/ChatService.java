@@ -35,6 +35,9 @@ public class ChatService {
     @Autowired(required = false)
     private FirebaseService firebaseService;
 
+    @Autowired(required = false)
+    private NotificationService notificationService;
+
     /**
      * Tạo conversation mới cho user với admin
      */
@@ -175,6 +178,38 @@ public class ChatService {
             }
         } else {
             log.warn("⚠️ ChatService: FirebaseService is NULL - message will NOT be sent to Firebase!");
+        }
+
+        // Gửi notification
+        if (notificationService != null) {
+            try {
+                // Lấy thông tin conversation participants để biết người nhận
+                List<ConversationParticipant> participants = participantRepository.findByConversationId(conversationId);
+                String senderName = user != null ? user.getFullName() : "Người dùng";
+
+                if (isAdmin) {
+                    // Admin gửi message -> notify user (người tạo conversation)
+                    Long recipientId = conversation.getCreatedByUserId();
+                    if (recipientId != null && !recipientId.equals(senderId)) {
+                        notificationService.notifyAdminMessage(
+                                recipientId,
+                                conversationId,
+                                senderName,
+                                request.getContent()
+                        );
+                    }
+                } else {
+                    // User gửi message -> notify tất cả admin
+                    notificationService.notifyUserMessage(
+                            conversationId,
+                            senderId,
+                            senderName,
+                            request.getContent()
+                    );
+                }
+            } catch (Exception e) {
+                log.error("Error sending notification for chat message: {}", e.getMessage(), e);
+            }
         }
 
         return messageDTO;

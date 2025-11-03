@@ -3,24 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard - Thông báo</title>
+  <title th:text="${pageTitle}">Thông báo</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
-    .notification-card {
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #f8f9fa;
+    }
+    .notification-item {
       border-left: 4px solid #007bff;
       margin-bottom: 10px;
       animation: slideIn 0.3s ease-out;
+      cursor: pointer;
+      transition: all 0.2s;
     }
-
-    .notification-card.new-order {
+    .notification-item:hover {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transform: translateX(4px);
+    }
+    .notification-item.unread {
+      background-color: #e7f3ff;
+      font-weight: 500;
+    }
+    .notification-item.USER_MESSAGE {
       border-left-color: #28a745;
     }
-
-    .notification-card.status-update {
+    .notification-item.NEW_ORDER {
       border-left-color: #ffc107;
     }
-
+    .notification-item.ADMIN_MESSAGE,
+    .notification-item.ORDER_STATUS_UPDATED {
+      border-left-color: #17a2b8;
+    }
     @keyframes slideIn {
       from {
         opacity: 0;
@@ -31,108 +46,129 @@
         transform: translateX(0);
       }
     }
-
+    .notification-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 15px;
+    }
+    .notification-icon.USER_MESSAGE {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .notification-icon.NEW_ORDER {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+    .notification-icon.ADMIN_MESSAGE,
+    .notification-icon.ORDER_STATUS_UPDATED {
+      background-color: #d1ecf1;
+      color: #0c5460;
+    }
     .notification-badge {
       position: fixed;
-      top: 20px;
+      top: 70px;
       right: 20px;
       z-index: 1000;
     }
-
-    .sound-indicator {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      z-index: 1000;
+    .notification-badge .badge {
+      font-size: 14px;
+      padding: 8px 12px;
     }
   </style>
 </head>
 <body>
+<div th:replace="~{admin/fragments/notification-widget :: notification-widget}"></div>
+
 <div class="container-fluid">
   <div class="row">
-    <!-- Sidebar -->
-    <div class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
-      <div class="position-sticky pt-3">
-        <ul class="nav flex-column">
-          <li class="nav-item">
-            <a class="nav-link" href="/admin/dashboard">
-              <i class="fas fa-tachometer-alt"></i> Dashboard
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link active" href="/admin/notifications">
-              <i class="fas fa-bell"></i> Thông báo
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="/admin/orders">
-              <i class="fas fa-shopping-cart"></i> Đơn hàng
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="/admin/products">
-              <i class="fas fa-box"></i> Sản phẩm
-            </a>
-          </li>
-        </ul>
-      </div>
-    </div>
+    <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
 
-    <!-- Main content -->
     <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2">Thông báo Real-time</h1>
-        <div class="btn-toolbar mb-2 mb-md-0">
-          <button class="btn btn-sm btn-outline-secondary" onclick="clearNotifications()">
-            <i class="fas fa-trash"></i> Xóa tất cả
+      <div class="d-flex justify-content-between align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <div>
+          <h2 class="h4 mb-0">
+            <i class="fas fa-bell me-2"></i> Thông báo
+            <span class="badge bg-danger ms-2" th:text="${unreadCount}" th:if="${unreadCount != null && unreadCount > 0}">0</span>
+          </h2>
+        </div>
+        <div class="btn-toolbar">
+          <button class="btn btn-sm btn-outline-primary me-2" onclick="markAllAsRead()">
+            <i class="fas fa-check-double"></i> Đánh dấu tất cả đã đọc
           </button>
-          <button class="btn btn-sm btn-outline-secondary" onclick="toggleSound()">
-            <i class="fas fa-volume-up" id="soundIcon"></i> <span id="soundText">Bật âm thanh</span>
+          <button class="btn btn-sm btn-outline-secondary" onclick="refreshNotifications()">
+            <i class="fas fa-sync-alt"></i> Làm mới
           </button>
         </div>
       </div>
 
       <!-- Connection Status -->
-      <div class="alert alert-info" id="connectionStatus">
-        <i class="fas fa-wifi"></i> Đang kết nối...
+      <div class="alert alert-info alert-dismissible fade show" id="connectionStatus" role="alert">
+        <i class="fas fa-wifi"></i> <span id="connectionText">Đang kết nối...</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
       </div>
 
-      <!-- Notifications Container -->
-      <div id="notificationsContainer">
-        <!-- Notifications will be added here dynamically -->
-      </div>
+      <!-- Notifications List -->
+      <div id="notificationsList">
+        <div th:if="${notifications == null || notifications.isEmpty()}" class="text-center py-5">
+          <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
+          <h4 class="text-muted">Chưa có thông báo nào</h4>
+        </div>
 
-      <!-- Empty state -->
-      <div class="text-center py-5" id="emptyState" style="display: none;">
-        <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
-        <h4 class="text-muted">Chưa có thông báo nào</h4>
-        <p class="text-muted">Các thông báo về đơn hàng mới sẽ xuất hiện ở đây</p>
+        <div th:each="notif : ${notifications}"
+             class="card notification-item mb-2"
+             th:classappend="${!notif.isRead} ? 'unread' : ''"
+             th:attr="data-notification-id=${notif.notificationId}, data-type=${notif.type}">
+          <div class="card-body">
+            <div class="d-flex align-items-start">
+              <div class="notification-icon" th:attr="data-type=${notif.type}">
+                <i class="fas"
+                   th:class="${notif.type.name() == 'USER_MESSAGE'} ? 'fa-comment' :
+                                                  (${notif.type.name() == 'NEW_ORDER'} ? 'fa-shopping-cart' :
+                                                  (${notif.type.name() == 'ADMIN_MESSAGE'} ? 'fa-user-shield' : 'fa-bell'))"></i>
+              </div>
+              <div class="flex-grow-1">
+                <h6 class="card-title mb-1" th:text="${notif.title}">Title</h6>
+                <p class="card-text mb-2" th:text="${notif.message}">Message</p>
+                <small class="text-muted">
+                  <i class="fas fa-clock"></i>
+                  <span th:text="${#temporals.format(notif.createdAt, 'dd/MM/yyyy HH:mm')}"></span>
+                </small>
+              </div>
+              <div class="ms-2">
+                <button class="btn btn-sm btn-outline-secondary"
+                        th:onclick="'markAsRead(' + ${notif.notificationId} + ')'"
+                        th:if="${!notif.isRead}">
+                  <i class="fas fa-check"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
   </div>
 </div>
 
-<!-- Notification Badge -->
+<!-- Notification Badge (for real-time notifications) -->
 <div class="notification-badge">
-  <span class="badge bg-danger" id="notificationCount" style="display: none;">0</span>
+  <span class="badge bg-danger" id="liveNotificationBadge" style="display: none;">0</span>
 </div>
 
-<!-- Sound Indicator -->
-<div class="sound-indicator">
-  <div class="alert alert-success" id="soundIndicator" style="display: none;">
-    <i class="fas fa-volume-up"></i> Âm thanh đã bật
-  </div>
-</div>
-
-<!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 
-<script>
+<script th:inline="javascript">
+  /*<![CDATA[*/
+  const adminId = /*[[${unreadCount}]]*/ null ? null : 1; // Will be set from backend
+  /*]]>*/
+
   let stompClient = null;
-  let notificationCount = 0;
-  let soundEnabled = false;
+  let unreadCount = /*[[${unreadCount != null ? unreadCount : 0}]]*/ 0;
 
   // Initialize WebSocket connection
   function connect() {
@@ -144,146 +180,206 @@
       updateConnectionStatus(true);
 
       // Subscribe to admin notifications
-      stompClient.subscribe('/topic/admin/orders', function(notification) {
+      stompClient.subscribe('/topic/admin/notifications', function(notification) {
         const data = JSON.parse(notification.body);
-        addNotification(data);
+        handleNewNotification(data);
       });
+
+      // Also subscribe to user-specific topic (if we have adminId)
+      if (adminId) {
+        stompClient.subscribe('/topic/user/' + adminId + '/notifications', function(notification) {
+          const data = JSON.parse(notification.body);
+          handleNewNotification(data);
+        });
+      }
     }, function(error) {
       console.log('Connection error: ' + error);
       updateConnectionStatus(false);
-      // Retry connection after 5 seconds
       setTimeout(connect, 5000);
     });
   }
 
   function updateConnectionStatus(connected) {
     const statusEl = document.getElementById('connectionStatus');
+    const textEl = document.getElementById('connectionText');
     if (connected) {
-      statusEl.className = 'alert alert-success';
-      statusEl.innerHTML = '<i class="fas fa-wifi"></i> Đã kết nối';
+      statusEl.className = 'alert alert-success alert-dismissible fade show';
+      textEl.textContent = 'Đã kết nối - Nhận thông báo real-time';
     } else {
-      statusEl.className = 'alert alert-danger';
-      statusEl.innerHTML = '<i class="fas fa-wifi"></i> Mất kết nối - Đang thử kết nối lại...';
+      statusEl.className = 'alert alert-danger alert-dismissible fade show';
+      textEl.textContent = 'Mất kết nối - Đang thử kết nối lại...';
     }
   }
 
-  function addNotification(notification) {
-    notificationCount++;
-    updateNotificationCount();
+  function handleNewNotification(notification) {
+    unreadCount++;
+    updateUnreadBadge();
 
-    // Play sound if enabled
-    if (soundEnabled) {
-      playNotificationSound();
-    }
+    // Show toast notification
+    showToast(notification);
 
-    // Show sound indicator
-    if (soundEnabled) {
-      showSoundIndicator();
-    }
+    // Add to list if on notifications page
+    addNotificationToList(notification);
 
-    // Create notification card
-    const notificationCard = createNotificationCard(notification);
-
-    // Add to container
-    const container = document.getElementById('notificationsContainer');
-    const emptyState = document.getElementById('emptyState');
-
-    if (emptyState.style.display !== 'none') {
-      emptyState.style.display = 'none';
-    }
-
-    container.insertBefore(notificationCard, container.firstChild);
-
-    // Auto remove after 30 seconds
-    setTimeout(() => {
-      notificationCard.remove();
-      notificationCount--;
-      updateNotificationCount();
-
-      // Show empty state if no notifications
-      if (notificationCount === 0) {
-        emptyState.style.display = 'block';
-      }
-    }, 30000);
+    // Refresh count from server
+    refreshUnreadCount();
   }
 
-  function createNotificationCard(notification) {
-    const card = document.createElement('div');
-    card.className = 'card notification-card ' + (notification.type === 'NEW_ORDER' ? 'new-order' : 'status-update');
+  function addNotificationToList(notification) {
+    const list = document.getElementById('notificationsList');
+    const emptyState = list.querySelector('.text-center');
 
-    const icon = notification.type === 'NEW_ORDER' ? 'fas fa-shopping-cart' : 'fas fa-sync-alt';
-    const title = notification.type === 'NEW_ORDER' ? 'Đơn hàng mới' : 'Cập nhật trạng thái';
+    if (emptyState) {
+      emptyState.remove();
+    }
 
-    card.innerHTML = `
+    const notificationItem = createNotificationElement(notification);
+    list.insertBefore(notificationItem, list.firstChild);
+  }
+
+  function createNotificationElement(notification) {
+    const div = document.createElement('div');
+    div.className = 'card notification-item mb-2 unread';
+    div.setAttribute('data-notification-id', notification.notificationId);
+    div.setAttribute('data-type', notification.type);
+
+    const iconClass = notification.type === 'USER_MESSAGE' ? 'fa-comment' :
+            notification.type === 'NEW_ORDER' ? 'fa-shopping-cart' :
+                    notification.type === 'ADMIN_MESSAGE' ? 'fa-user-shield' : 'fa-bell';
+
+    const formattedDate = new Date(notification.createdAt).toLocaleString('vi-VN');
+
+    div.innerHTML = `
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <h6 class="card-title">
-                                <i class="${icon}"></i> ${title}
-                            </h6>
-                            <p class="card-text">${notification.message}</p>
+                    <div class="d-flex align-items-start">
+                        <div class="notification-icon ${notification.type}">
+                            <i class="fas ${iconClass}"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="card-title mb-1">${notification.title}</h6>
+                            <p class="card-text mb-2">${notification.message}</p>
                             <small class="text-muted">
-                                <i class="fas fa-clock"></i> ${new Date(notification.timestamp).toLocaleString('vi-VN')}
+                                <i class="fas fa-clock"></i> ${formattedDate}
                             </small>
                         </div>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="this.parentElement.parentElement.parentElement.remove(); notificationCount--; updateNotificationCount();">
-                            <i class="fas fa-times"></i>
-                        </button>
+                        <div class="ms-2">
+                            <button class="btn btn-sm btn-outline-secondary" onclick="markAsRead(${notification.notificationId})">
+                                <i class="fas fa-check"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
 
-    return card;
+    return div;
   }
 
-  function updateNotificationCount() {
-    const countEl = document.getElementById('notificationCount');
-    if (notificationCount > 0) {
-      countEl.textContent = notificationCount;
-      countEl.style.display = 'inline-block';
+  function showToast(notification) {
+    // Create a simple toast notification
+    const toast = document.createElement('div');
+    toast.className = 'toast align-items-center text-white bg-primary border-0';
+    toast.setAttribute('role', 'alert');
+    toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <strong>${notification.title}</strong><br>
+                        ${notification.message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            `;
+
+    const toastContainer = document.getElementById('toastContainer') || createToastContainer();
+    toastContainer.appendChild(toast);
+
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+
+    toast.addEventListener('hidden.bs.toast', () => toast.remove());
+  }
+
+  function createToastContainer() {
+    const container = document.createElement('div');
+    container.id = 'toastContainer';
+    container.className = 'toast-container position-fixed top-0 end-0 p-3';
+    container.style.zIndex = '1055';
+    document.body.appendChild(container);
+    return container;
+  }
+
+  function updateUnreadBadge() {
+    const badge = document.getElementById('liveNotificationBadge');
+    if (unreadCount > 0) {
+      badge.textContent = unreadCount;
+      badge.style.display = 'inline-block';
     } else {
-      countEl.style.display = 'none';
+      badge.style.display = 'none';
     }
   }
 
-  function playNotificationSound() {
-    // Create audio element and play notification sound
-    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT');
-    audio.play().catch(e => console.log('Could not play sound:', e));
+  function markAsRead(notificationId) {
+    fetch(`/admin/api/notifications/${notificationId}/read`, {
+      method: 'PUT'
+    })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                const item = document.querySelector(`[data-notification-id="${notificationId}"]`);
+                if (item) {
+                  item.classList.remove('unread');
+                  item.querySelector('.btn').remove();
+                }
+                unreadCount = Math.max(0, unreadCount - 1);
+                updateUnreadBadge();
+                refreshUnreadCount();
+              }
+            })
+            .catch(error => {
+              console.error('Error marking notification as read:', error);
+            });
   }
 
-  function showSoundIndicator() {
-    const indicator = document.getElementById('soundIndicator');
-    indicator.style.display = 'block';
-    setTimeout(() => {
-      indicator.style.display = 'none';
-    }, 2000);
+  function markAllAsRead() {
+    fetch('/admin/api/notifications/read-all', {
+      method: 'PUT'
+    })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                document.querySelectorAll('.notification-item.unread').forEach(item => {
+                  item.classList.remove('unread');
+                });
+                document.querySelectorAll('.notification-item .btn').forEach(btn => btn.remove());
+                unreadCount = 0;
+                updateUnreadBadge();
+                refreshUnreadCount();
+              }
+            })
+            .catch(error => {
+              console.error('Error marking all as read:', error);
+            });
   }
 
-  function toggleSound() {
-    soundEnabled = !soundEnabled;
-    const icon = document.getElementById('soundIcon');
-    const text = document.getElementById('soundText');
-
-    if (soundEnabled) {
-      icon.className = 'fas fa-volume-up';
-      text.textContent = 'Tắt âm thanh';
-    } else {
-      icon.className = 'fas fa-volume-mute';
-      text.textContent = 'Bật âm thanh';
-    }
+  function refreshNotifications() {
+    window.location.reload();
   }
 
-  function clearNotifications() {
-    document.getElementById('notificationsContainer').innerHTML = '';
-    notificationCount = 0;
-    updateNotificationCount();
-    document.getElementById('emptyState').style.display = 'block';
+  function refreshUnreadCount() {
+    fetch('/admin/api/notifications/unread/count')
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                unreadCount = data.data;
+                updateUnreadBadge();
+              }
+            })
+            .catch(error => console.error('Error refreshing count:', error));
   }
 
   // Initialize when page loads
   document.addEventListener('DOMContentLoaded', function() {
     connect();
+    updateUnreadBadge();
   });
 </script>
 </body>
