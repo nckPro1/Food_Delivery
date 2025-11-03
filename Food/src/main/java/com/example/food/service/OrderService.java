@@ -5,6 +5,7 @@ import com.example.food.model.*;
 import com.example.food.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +34,9 @@ public class OrderService {
     private final CouponRepository couponRepository;
     private final UserRepository userRepository;
     private final ShippingFeeSettingsService shippingFeeSettingsService;
+
+    @Autowired(required = false)
+    private com.example.food.service.NotificationService notificationService;
 
     // ===============================
     // ORDER MANAGEMENT
@@ -207,6 +211,15 @@ public class OrderService {
         // Convert to DTO for response
         OrderDTO orderDTO = convertToDTO(finalSavedOrder);
 
+        // Gửi notification cho admin về đơn hàng mới
+        if (notificationService != null) {
+            try {
+                notificationService.notifyNewOrder(orderDTO);
+            } catch (Exception e) {
+                log.error("Error sending new order notification: {}", e.getMessage(), e);
+            }
+        }
+
         log.info("Order created successfully: {}", finalSavedOrder.getOrderNumber());
         return orderDTO;
     }
@@ -252,11 +265,11 @@ public class OrderService {
         // Update actual delivery time if done
         if (newStatus == Order.OrderStatus.DONE) {
             order.setActualDeliveryTime(LocalDateTime.now());
-            
+
             // Tự động set payment status = COMPLETED cho đơn CASH khi DONE
             if (order.getPaymentMethod() == Order.PaymentMethod.CASH) {
                 order.setPaymentStatus(Order.PaymentStatus.COMPLETED);
-                
+
                 // Cập nhật Payment entity
                 List<Payment> payments = paymentRepository.findByOrderOrderId(order.getOrderId());
                 if (!payments.isEmpty()) {
@@ -284,6 +297,21 @@ public class OrderService {
 
         Order savedOrder = orderRepository.save(order);
         log.info("Order status updated: {} -> {}", orderId, newStatus);
+
+        // Gửi notification cho user về cập nhật trạng thái
+        if (notificationService != null) {
+            try {
+                Long userId = savedOrder.getUser().getUserId();
+                notificationService.notifyOrderStatusUpdate(
+                        userId,
+                        orderId,
+                        savedOrder.getOrderNumber(),
+                        newStatus
+                );
+            } catch (Exception e) {
+                log.error("Error sending order status update notification: {}", e.getMessage(), e);
+            }
+        }
 
         return convertToDTO(savedOrder);
     }

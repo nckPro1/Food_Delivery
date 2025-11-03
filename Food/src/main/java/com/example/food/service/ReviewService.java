@@ -36,7 +36,8 @@ public class ReviewService {
     // Reviews
     @Transactional(readOnly = true)
     public Page<ProductReview> listReviews(Long productId, Pageable pageable) {
-        return productReviewRepository.findByProductIdAndIsVisibleTrueOrderByCreatedAtDesc(productId, pageable);
+        // Sử dụng query lấy cả isVisible = true hoặc null để hiển thị các reviews cũ
+        return productReviewRepository.findByProductIdAndIsVisibleTrueOrNullOrderByCreatedAtDesc(productId, pageable);
     }
 
     public ProductReview createOrUpdateReview(Long productId,
@@ -73,10 +74,13 @@ public class ReviewService {
                 .productId(productId)
                 .userId(userId)
                 .orderItemId(orderItemId)
+                .isVisible(true) // Đảm bảo review mới luôn visible
                 .build());
 
         review.setRating(rating);
         review.setComment(comment);
+        // Đảm bảo review luôn visible khi được tạo/cập nhật bởi user
+        review.setIsVisible(true);
         if (imageUrls != null && !imageUrls.isEmpty()) {
             review.setImageUrls(String.join(",", imageUrls));
             review.setImageCount(imageUrls.size());
@@ -93,7 +97,8 @@ public class ReviewService {
     // Comments
     @Transactional(readOnly = true)
     public Page<ProductReviewComment> listComments(Long productId, Pageable pageable) {
-        return productReviewCommentRepository.findByProductIdAndIsVisibleTrueOrderByCreatedAtDesc(productId, pageable);
+        // Sử dụng query lấy cả isVisible = true hoặc null để hiển thị các comments cũ
+        return productReviewCommentRepository.findByProductIdAndIsVisibleTrueOrNullOrderByCreatedAtDesc(productId, pageable);
     }
 
     public ProductReviewComment createComment(Long productId,
@@ -110,6 +115,7 @@ public class ReviewService {
                 .userId(userId)
                 .reviewId(maybeReviewId)
                 .content(content.trim())
+                .isVisible(true) // Đảm bảo comment mới luôn visible
                 .build();
 
         if (attachments != null && !attachments.isEmpty()) {
@@ -122,7 +128,7 @@ public class ReviewService {
     // Aggregates
     private void recalcProductAggregates(Long productId) {
         List<ProductReview> visibleReviews = productReviewRepository
-                .findByProductIdAndIsVisibleTrueOrderByCreatedAtDesc(productId, Pageable.unpaged())
+                .findByProductIdAndIsVisibleTrueOrNullOrderByCreatedAtDesc(productId, Pageable.unpaged())
                 .getContent();
         int count = visibleReviews.size();
         double avg = 0.0;
@@ -199,11 +205,21 @@ public class ReviewService {
         }
     }
 
-    private String resolveUserName(Long userId) {
+    public String resolveUserName(Long userId) {
         try {
             return userRepository.findById(userId).map(User::getFullName).orElse("User " + userId);
         } catch (Exception e) {
             return "User " + userId;
+        }
+    }
+
+    public String resolveUserAvatarUrl(Long userId) {
+        try {
+            return userRepository.findById(userId)
+                    .map(User::getAvatarUrl)
+                    .orElse(null);
+        } catch (Exception e) {
+            return null;
         }
     }
 }

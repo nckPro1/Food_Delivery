@@ -389,6 +389,127 @@ public class AdminProductController {
     }
 
     /**
+     * Cập nhật sản phẩm (Form submission)
+     */
+    @PostMapping("/update/{productId}")
+    public String updateProduct(
+            @PathVariable("productId") Long productId,
+            @RequestParam String name,
+            @RequestParam(required = false) String description,
+            @RequestParam double price,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) MultipartFile mainImage,
+            @RequestParam(required = false) MultipartFile[] galleryImages,
+            @RequestParam(defaultValue = "true") boolean isAvailable,
+            @RequestParam(defaultValue = "false") boolean isFeatured,
+            @RequestParam(defaultValue = "false") boolean hasOptions,
+            @RequestParam(required = false) String[] optionNames,
+            @RequestParam(required = false) String[] optionTypes,
+            @RequestParam(required = false) BigDecimal[] optionPrices,
+            @RequestParam(required = false) Boolean[] optionRequireds,
+            @RequestParam(required = false) Integer[] optionMaxSelections,
+            @RequestParam(defaultValue = "15") int preparationTime,
+            Model model) {
+        try {
+            // Get existing product
+            Product existingProduct = productService.getProductById(productId)
+                    .orElseThrow(() -> new IllegalArgumentException("Sản phẩm không tồn tại"));
+
+            // Update basic info
+            existingProduct.setName(name);
+            existingProduct.setDescription(description);
+            existingProduct.setPrice(BigDecimal.valueOf(price));
+            existingProduct.setIsAvailable(isAvailable);
+            existingProduct.setIsFeatured(isFeatured);
+            existingProduct.setHasOptions(hasOptions);
+            existingProduct.setPreparationTime(preparationTime);
+
+            // Update category
+            if (categoryId != null && categoryId > 0) {
+                Category category = productService.getCategoryById(categoryId)
+                        .orElseThrow(() -> new IllegalArgumentException("Danh mục không tồn tại"));
+                existingProduct.setCategory(category);
+            } else {
+                // If categoryId is null or 0, remove category
+                existingProduct.setCategory(null);
+            }
+
+            // Handle main image
+            if (mainImage != null && !mainImage.isEmpty()) {
+                String mainImageUrl = saveImage(mainImage, "products");
+                existingProduct.setImageUrl(mainImageUrl);
+            }
+
+            // Handle gallery images
+            if (galleryImages != null && galleryImages.length > 0) {
+                List<String> galleryUrls = new ArrayList<>();
+                for (MultipartFile file : galleryImages) {
+                    if (!file.isEmpty()) {
+                        String galleryUrl = saveImage(file, "products/gallery");
+                        galleryUrls.add(galleryUrl);
+                    }
+                }
+                if (!galleryUrls.isEmpty()) {
+                    existingProduct.setGalleryUrls(String.join(",", galleryUrls));
+                }
+            }
+
+            // Save product
+            Product updatedProduct = productService.updateProduct(productId, existingProduct);
+
+            // Handle product options
+            if (hasOptions && optionNames != null && optionNames.length > 0) {
+                // Delete existing options
+                productOptionRepository.deleteByProductId(productId);
+
+                // Create new options
+                for (int i = 0; i < optionNames.length; i++) {
+                    if (optionNames[i] != null && !optionNames[i].trim().isEmpty()) {
+                        ProductOption option = ProductOption.builder()
+                                .productId(updatedProduct.getProductId())
+                                .optionName(optionNames[i].trim())
+                                .optionType(ProductOption.OptionType.valueOf(
+                                        optionTypes != null && i < optionTypes.length && optionTypes[i] != null ?
+                                                optionTypes[i].toUpperCase() : "SIZE"))
+                                .price(optionPrices != null && i < optionPrices.length && optionPrices[i] != null ? optionPrices[i] : BigDecimal.ZERO)
+                                .isRequired(optionRequireds != null && i < optionRequireds.length && optionRequireds[i] != null ? optionRequireds[i] : false)
+                                .maxSelections(optionMaxSelections != null && i < optionMaxSelections.length && optionMaxSelections[i] != null ? optionMaxSelections[i] : 1)
+                                .build();
+
+                        productOptionRepository.save(option);
+                    }
+                }
+            } else if (!hasOptions) {
+                // Delete all options if hasOptions is false
+                productOptionRepository.deleteByProductId(productId);
+            }
+
+            model.addAttribute("success", "Cập nhật sản phẩm thành công!");
+            return "redirect:/admin/products/view/" + updatedProduct.getProductId();
+
+        } catch (Exception e) {
+            log.error("Error updating product: ", e);
+            model.addAttribute("error", "Lỗi cập nhật sản phẩm: " + e.getMessage());
+            return "redirect:/admin/products/edit/" + productId;
+        }
+    }
+
+    /**
+     * Xóa sản phẩm (Form submission)
+     */
+    @GetMapping("/delete/{productId}")
+    public String deleteProductForm(@PathVariable Long productId, Model model) {
+        try {
+            productService.deleteProduct(productId);
+            model.addAttribute("success", "Xóa sản phẩm thành công!");
+        } catch (Exception e) {
+            log.error("Error deleting product: ", e);
+            model.addAttribute("error", "Lỗi xóa sản phẩm: " + e.getMessage());
+        }
+        return "redirect:/admin/products";
+    }
+
+    /**
      * Xóa sản phẩm (API)
      */
     @DeleteMapping("/api/delete/{productId}")

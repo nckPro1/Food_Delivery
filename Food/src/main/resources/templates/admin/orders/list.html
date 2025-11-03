@@ -184,6 +184,8 @@
   </style>
 </head>
 <body>
+<div th:replace="~{admin/fragments/notification-widget :: notification-widget}"></div>
+
 <div class="container-fluid">
   <div class="row">
     <!-- Sidebar -->
@@ -469,7 +471,7 @@
     const today = new Date();
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
-    
+
     if (date.toDateString() === today.toDateString()) {
       return 'Hôm nay';
     } else if (date.toDateString() === yesterday.toDateString()) {
@@ -499,14 +501,14 @@
     const startIndex = (currentPage - 1) * pageSize;
     const endIndex = Math.min(startIndex + pageSize, orders.length);
     const pageOrders = orders.slice(startIndex, endIndex);
-    
+
     // Group page orders by date
     const pageOrdersByDate = groupOrdersByDate(pageOrders);
 
     // Display orders grouped by date
     Object.keys(pageOrdersByDate).sort((a, b) => new Date(b) - new Date(a)).forEach(date => {
       const dateOrders = pageOrdersByDate[date];
-      
+
       // Add date header
       const dateRow = document.createElement('tr');
       dateRow.className = 'table-light';
@@ -517,7 +519,7 @@
         </td>
       `;
       tbody.appendChild(dateRow);
-      
+
       // Add orders for this date
       dateOrders.forEach(order => {
         const row = document.createElement('tr');
@@ -562,16 +564,16 @@
   // Update pagination controls
   function updatePaginationControls(totalOrders) {
     totalPages = Math.ceil(totalOrders / pageSize);
-    
+
     document.getElementById('currentPage').textContent = currentPage;
     document.getElementById('totalPages').textContent = totalPages;
-    
+
     // Update button states
     document.getElementById('firstPageBtn').disabled = currentPage === 1;
     document.getElementById('prevPageBtn').disabled = currentPage === 1;
     document.getElementById('nextPageBtn').disabled = currentPage === totalPages;
     document.getElementById('lastPageBtn').disabled = currentPage === totalPages;
-    
+
     // Generate pagination buttons
     generatePaginationButtons();
   }
@@ -580,27 +582,27 @@
   function generatePaginationButtons() {
     const container = document.getElementById('paginationControls');
     container.innerHTML = '';
-    
+
     const maxVisiblePages = 5;
     let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
     let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-    
+
     if (endPage - startPage + 1 < maxVisiblePages) {
       startPage = Math.max(1, endPage - maxVisiblePages + 1);
     }
-    
+
     // Previous button
     if (startPage > 1) {
       const prevBtn = createPaginationButton('...', startPage - 1, false);
       container.appendChild(prevBtn);
     }
-    
+
     // Page buttons
     for (let i = startPage; i <= endPage; i++) {
       const btn = createPaginationButton(i.toString(), i, i === currentPage);
       container.appendChild(btn);
     }
-    
+
     // Next button
     if (endPage < totalPages) {
       const nextBtn = createPaginationButton('...', endPage + 1, false);
@@ -612,12 +614,12 @@
   function createPaginationButton(text, page, isActive) {
     const li = document.createElement('li');
     li.className = `page-item ${isActive ? 'active' : ''}`;
-    
+
     const button = document.createElement('button');
     button.className = 'page-link';
     button.textContent = text;
     button.onclick = () => goToPage(page);
-    
+
     li.appendChild(button);
     return li;
   }

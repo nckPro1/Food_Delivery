@@ -44,9 +44,9 @@ public class SaleService {
         LocalDateTime now = LocalDateTime.now();
         if (request.getProductId() != null) {
             boolean hasActiveSale = saleRepository
-                .findByProductIdAndIsActiveTrueAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
-                    request.getProductId(), now, now
-                ).isPresent();
+                    .findByProductIdAndIsActiveTrueAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
+                            request.getProductId(), now, now
+                    ).isPresent();
             if (hasActiveSale) {
                 throw new RuntimeException("Sản phẩm này đang trong thời gian khuyến mãi. Không thể tạo thêm sale mới.");
             }
@@ -121,6 +121,86 @@ public class SaleService {
         return convertToDTO(savedSale);
     }
 
+    /**
+     * Deactivate expired sales (sales that have passed their endDate)
+     */
+    @Transactional
+    public int deactivateExpiredSales() {
+        LocalDateTime now = LocalDateTime.now();
+        List<Sale> expiredSales = saleRepository.findAll().stream()
+                .filter(s -> s.getIsActive() && s.getEndDate() != null && now.isAfter(s.getEndDate()))
+                .collect(Collectors.toList());
+
+        for (Sale sale : expiredSales) {
+            sale.setIsActive(false);
+            // Clear product sale fields for expired sales
+            clearProductSaleFields(sale.getProductId());
+        }
+
+        saleRepository.saveAll(expiredSales);
+        return expiredSales.size();
+    }
+
+    /**
+     * Cleanup old expired sales (delete sales that have been expired for more than a certain period)
+     * This method deletes sales that ended more than 30 days ago
+     */
+    @Transactional
+    public int cleanupOldExpiredSales() {
+        LocalDateTime cutoffDate = LocalDateTime.now().minusDays(30);
+        List<Sale> oldExpiredSales = saleRepository.findAll().stream()
+                .filter(s -> !s.getIsActive() && s.getEndDate() != null && s.getEndDate().isBefore(cutoffDate))
+                .collect(Collectors.toList());
+
+        saleRepository.deleteAll(oldExpiredSales);
+        return oldExpiredSales.size();
+    }
+
+    /**
+     * Get sale statistics
+     */
+    public SaleStatistics getSaleStatistics() {
+        List<Sale> allSales = saleRepository.findAll();
+        LocalDateTime now = LocalDateTime.now();
+
+        long totalSales = allSales.size();
+        long activeSales = allSales.stream()
+                .filter(s -> s.getIsActive() && s.getEndDate() != null && now.isBefore(s.getEndDate()))
+                .count();
+        long expiredSales = allSales.stream()
+                .filter(s -> !s.getIsActive() || (s.getEndDate() != null && now.isAfter(s.getEndDate())))
+                .count();
+
+        return new SaleStatistics(totalSales, activeSales, expiredSales);
+    }
+
+    /**
+     * Inner class for sale statistics
+     */
+    public static class SaleStatistics {
+        private final long totalSales;
+        private final long activeSales;
+        private final long expiredSales;
+
+        public SaleStatistics(long totalSales, long activeSales, long expiredSales) {
+            this.totalSales = totalSales;
+            this.activeSales = activeSales;
+            this.expiredSales = expiredSales;
+        }
+
+        public long getTotalSales() {
+            return totalSales;
+        }
+
+        public long getActiveSales() {
+            return activeSales;
+        }
+
+        public long getExpiredSales() {
+            return expiredSales;
+        }
+    }
+
     private void updateProductSaleFields(Sale sale) {
         Product product = productService.getProductById(sale.getProductId())
                 .orElseThrow(() -> new RuntimeException("Product not found"));
@@ -149,7 +229,7 @@ public class SaleService {
     }
 
     private SaleDTO convertToDTO(Sale sale) {
-        return SaleDTO.builder()
+        SaleDTO.SaleDTOBuilder builder = SaleDTO.builder()
                 .saleId(sale.getSaleId())
                 .productId(sale.getProductId())
                 .saleName(sale.getSaleName())
@@ -161,7 +241,28 @@ public class SaleService {
                 .endDate(sale.getEndDate())
                 .isActive(sale.getIsActive())
                 .createdAt(sale.getCreatedAt())
-                .updatedAt(sale.getUpdatedAt())
-                .build();
+                .updatedAt(sale.getUpdatedAt());
+
+        // Populate product information if productId exists
+        if (sale.getProductId() != null) {
+            try {
+                Product product = productService.getProductById(sale.getProductId()).orElse(null);
+                if (product != null) {
+                    builder.productName(product.getName())
+                            .productImageUrl(product.getImageUrl())
+                            .originalPrice(product.getPrice()); // Giá gốc của sản phẩm
+
+                    // Get category name if category exists
+                    if (product.getCategory() != null) {
+                        builder.categoryName(product.getCategory().getCategoryName());
+                    }
+                }
+            } catch (Exception e) {
+                // Log error but don't fail the DTO conversion
+                // Product might not exist or there might be other issues
+            }
+        }
+
+        return builder.build();
     }
 }

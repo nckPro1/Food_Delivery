@@ -16,10 +16,13 @@ public class SaleDTO {
     private Long saleId;
     private Long productId;
     private String productName;
+    private String productImageUrl;
+    private String categoryName;
     private String saleName;
     private String saleDescription;
     private String discountType;
     private BigDecimal discountValue;
+    private BigDecimal originalPrice; // Giá gốc của sản phẩm
     private BigDecimal salePrice;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
