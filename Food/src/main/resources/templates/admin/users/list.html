@@ -186,11 +186,11 @@
                   <small class="text-muted" th:text="${user.address}">Address</small>
                 </td>
                 <td>
-                                            <span th:if="${user.roleId eq 2}" class="badge bg-danger">
+                                            <span th:if="${user.roleId eq 1}" class="badge bg-danger">
                                                 <i class="fas fa-crown me-1"></i>
                                                 Admin
                                             </span>
-                  <span th:if="${user.roleId eq 1}" class="badge bg-primary">
+                  <span th:if="${user.roleId eq 2}" class="badge bg-primary">
                                                 <i class="fas fa-user me-1"></i>
                                                 User
                                             </span>
