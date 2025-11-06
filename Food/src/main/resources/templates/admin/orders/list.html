@@ -89,16 +89,53 @@
       border-radius: 8px;
       overflow: hidden;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      font-size: 0.9rem;
     }
 
     .table th {
       background-color: #f8f9fa;
       border-bottom: 2px solid #dee2e6;
       font-weight: 600;
+      font-size: 0.85rem;
+      padding: 12px 8px;
+      white-space: nowrap;
     }
 
     .table td {
       vertical-align: middle;
+      padding: 12px 8px;
+      font-size: 0.85rem;
+    }
+
+    /* Responsive table */
+    @media (max-width: 1400px) {
+      .table th,
+      .table td {
+        padding: 10px 6px;
+        font-size: 0.8rem;
+      }
+    }
+
+    /* Compact columns */
+    .table .col-compact {
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .table .col-medium {
+      max-width: 150px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .table .col-large {
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     /* Payment Status Badges */
@@ -341,16 +378,15 @@
             <table class="table table-hover" id="ordersTable">
               <thead>
               <tr>
-                <th>Mã đơn hàng</th>
-                <th>Khách hàng</th>
-                <th>Số điện thoại</th>
-                <th>Địa chỉ giao</th>
-                <th>Tổng tiền</th>
-                <th>PT Thanh toán</th>
-                <th>TT Thanh toán</th>
-                <th>Trạng thái</th>
-                <th>Ngày tạo</th>
-                <th>Thao tác</th>
+                <th style="min-width: 140px;">Mã đơn hàng</th>
+                <th style="min-width: 120px;">Khách hàng</th>
+                <th style="min-width: 100px;">Số điện thoại</th>
+                <th style="min-width: 180px;">Địa chỉ</th>
+                <th style="min-width: 120px;">Tổng tiền</th>
+                <th style="min-width: 100px;">Thanh toán</th>
+                <th style="min-width: 100px;">Trạng thái</th>
+                <th style="min-width: 140px;">Ngày tạo</th>
+                <th style="min-width: 100px;">Thao tác</th>
               </tr>
               </thead>
               <tbody id="ordersTableBody">
@@ -492,7 +528,7 @@
     tbody.innerHTML = '';
 
     if (orders.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">Không có đơn hàng nào</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-4">Không có đơn hàng nào</td></tr>';
       updatePaginationInfo(0, 0, 0);
       return;
     }
@@ -513,7 +549,7 @@
       const dateRow = document.createElement('tr');
       dateRow.className = 'table-light';
       dateRow.innerHTML = `
-        <td colspan="10" class="fw-bold text-primary py-3">
+        <td colspan="9" class="fw-bold text-primary py-2">
           <i class="fas fa-calendar-day me-2"></i>
           ${formatDateHeader(date)} (${dateOrders.length} đơn hàng)
         </td>
@@ -523,25 +559,41 @@
       // Add orders for this date
       dateOrders.forEach(order => {
         const row = document.createElement('tr');
+        // Truncate address if too long
+        const address = order.deliveryAddress || 'N/A';
+        const shortAddress = address.length > 30 ? address.substring(0, 30) + '...' : address;
+
+        // Format date to be shorter
+        const orderDate = new Date(order.createdAt);
+        const formattedDate = orderDate.toLocaleDateString('vi-VN', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        }) + ' ' + orderDate.toLocaleTimeString('vi-VN', {hour: '2-digit', minute: '2-digit'});
+
         row.innerHTML = `
-          <td><strong>${order.orderNumber}</strong></td>
-          <td>${order.userFullName || 'N/A'}</td>
-          <td>${order.userPhone || 'N/A'}</td>
-          <td>${order.deliveryAddress || 'N/A'}</td>
-          <td><strong>${formatVND(order.finalAmount)}</strong></td>
-          <td><span class="method-badge method-${(order.paymentMethod || '').toLowerCase()}">${getPaymentMethodText(order.paymentMethod)}</span></td>
-          <td><span class="payment-badge payment-${(order.paymentStatus || '').toLowerCase()}">${getPaymentStatusText(order.paymentStatus)}</span></td>
-          <td><span class="status-badge status-${(order.orderStatus || '').toLowerCase()}">${getStatusText(order.orderStatus)}</span></td>
-          <td>${formatDate(order.createdAt)}</td>
+          <td><strong class="text-primary">${order.orderNumber}</strong></td>
+          <td class="col-medium" title="${order.userFullName || 'N/A'}">${order.userFullName || 'N/A'}</td>
+          <td class="col-compact">${order.userPhone || 'N/A'}</td>
+          <td class="col-large" title="${address}">${shortAddress}</td>
+          <td><strong class="text-success">${formatVND(order.finalAmount)}</strong></td>
           <td>
-            <div class="btn-group" role="group">
-              <a href="/admin/orders/${order.orderId}" class="btn btn-sm btn-outline-info" title="Xem chi tiết">
+            <div class="d-flex flex-column gap-1">
+              <span class="method-badge method-${(order.paymentMethod || '').toLowerCase()}" style="font-size: 0.75rem;">${getPaymentMethodText(order.paymentMethod)}</span>
+              <span class="payment-badge payment-${(order.paymentStatus || '').toLowerCase()}" style="font-size: 0.75rem;">${getPaymentStatusText(order.paymentStatus)}</span>
+            </div>
+          </td>
+          <td><span class="status-badge status-${(order.orderStatus || '').toLowerCase()}">${getStatusText(order.orderStatus)}</span></td>
+          <td class="col-compact" style="font-size: 0.8rem;">${formattedDate}</td>
+          <td>
+            <div class="btn-group btn-group-sm" role="group">
+              <a href="/admin/orders/${order.orderId}" class="btn btn-outline-info" title="Xem chi tiết">
                 <i class="fas fa-eye"></i>
               </a>
-              <button class="btn btn-sm btn-outline-warning" title="Cập nhật trạng thái" onclick="openStatusModal(${order.orderId}, '${order.orderNumber}', '${order.orderStatus}')">
+              <button class="btn btn-outline-warning" title="Cập nhật trạng thái" onclick="openStatusModal(${order.orderId}, '${order.orderNumber}', '${order.orderStatus}')">
                 <i class="fas fa-edit"></i>
               </button>
-              ${order.canBeCancelled ? `<button class="btn btn-sm btn-outline-danger" title="Hủy đơn hàng" onclick="cancelOrder(${order.orderId})"><i class="fas fa-times"></i></button>` : ''}
+              ${order.canBeCancelled ? `<button class="btn btn-outline-danger" title="Hủy đơn hàng" onclick="cancelOrder(${order.orderId})"><i class="fas fa-times"></i></button>` : ''}
             </div>
           </td>
         `;

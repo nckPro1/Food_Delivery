@@ -6,6 +6,7 @@ import com.google.firebase.FirebaseOptions;
 import com.google.firebase.database.FirebaseDatabase;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
 import java.io.FileInputStream;
@@ -25,7 +26,8 @@ import java.nio.file.Paths;
 @Slf4j
 public class FirebaseConfig {
 
-    private static final String FIREBASE_DB_URL = "https://foodapp-4da5f-default-rtdb.asia-southeast1.firebasedatabase.app";
+    @Value("${firebase.db-url:https://foodapp-4da5f-default-rtdb.asia-southeast1.firebasedatabase.app}")
+    private String FIREBASE_DB_URL;
 
     // Tên file service account key - có thể là tên mặc định hoặc tên thực tế từ Firebase
     // Code sẽ tìm theo thứ tự, file nào tìm thấy trước sẽ được dùng

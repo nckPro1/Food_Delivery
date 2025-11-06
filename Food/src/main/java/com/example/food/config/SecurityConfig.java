@@ -2,7 +2,6 @@ package com.example.food.config;
 
 import com.example.food.security.JwtAuthenticationEntryPoint;
 import com.example.food.security.JwtAuthenticationFilter;
-import com.example.food.config.RequestLoggingFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,9 +30,6 @@ public class SecurityConfig {
 
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
-
-    @Autowired
-    private RequestLoggingFilter requestLoggingFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -123,8 +119,6 @@ public class SecurityConfig {
                         .defaultSuccessUrl("/api/auth/oauth2/success", true)
                 );
 
-        // Add request logging filter first (to log before authentication)
-        http.addFilterBefore(requestLoggingFilter, UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
