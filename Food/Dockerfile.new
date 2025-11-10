@@ -1,0 +1,32 @@
+FROM eclipse-temurin:17-jdk-alpine
+
+# Install necessary packages
+RUN apk add --no-cache tzdata
+
+# Set timezone
+ENV TZ=Asia/Ho_Chi_Minh
+
+WORKDIR /app
+
+# Create directory for uploads
+RUN mkdir -p /app/uploads
+
+# Copy the JAR file
+COPY target/Food-0.0.1-SNAPSHOT.jar app.jar
+
+EXPOSE 8080
+
+# Add environment variables that can be overridden at runtime
+ENV SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/food_delivery_v2?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+ENV SPRING_DATASOURCE_USERNAME=root
+ENV SPRING_DATASOURCE_PASSWORD=lienminh95Ez
+ENV SPRING_JPA_HIBERNATE_DDL_AUTO=update
+ENV SERVER_PORT=8080
+ENV SERVER_ADDRESS=0.0.0.0
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
+  CMD wget -q --spider http://localhost:8080/actuator/health || exit 1
+
+# Run with environment variables and additional JVM options for container environment
+ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]
