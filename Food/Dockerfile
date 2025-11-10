@@ -1,32 +1,53 @@
-FROM eclipse-temurin:17-jdk-alpine
+# GIAI ĐOẠN 1: BUILD ỨNG DỤNG (BUILDER STAGE)
+# Sử dụng image Maven chính thức để build code
+FROM maven:3.8.7-eclipse-temurin-17 AS builder
 
-# Install necessary packages
-RUN apk add --no-cache tzdata
-
-# Set timezone
-ENV TZ=Asia/Ho_Chi_Minh
-
+# Thiết lập thư mục làm việc trong Stage 1
 WORKDIR /app
 
-# Create directory for uploads
+# Sao chép các file cấu hình và mã nguồn
+COPY pom.xml .
+COPY Food/pom.xml Food/
+# Tải dependencies trước để tận dụng cache
+RUN mvn dependency:go-offline -DskipTests
+
+# Sao chép toàn bộ mã nguồn vào image Builder
+COPY . .
+
+# Chạy lệnh build Maven để tạo file JAR
+# -DskipTests để bỏ qua test, tránh lỗi hoặc chậm quá trình build
+RUN mvn clean package -DskipTests
+
+---
+
+# GIAI ĐOẠN 2: TẠO IMAGE CHẠY CUỐI CÙNG (FINAL STAGE)
+# Sử dụng JRE tối thiểu, nhỏ gọn hơn (Alpine)
+FROM eclipse-temurin:17-jdk-alpine
+
+# CÀI ĐẶT CƠ BẢN
+# Cài đặt múi giờ
+RUN apk add --no-cache tzdata
+# Thiết lập múi giờ
+ENV TZ="Asia/Ho_Chi_Minh"
+
+# Thiết lập thư mục làm việc cho ứng dụng
+WORKDIR /app
+
+# Tạo thư mục uploads (nếu cần)
 RUN mkdir -p /app/uploads
 
-# Copy the JAR file
-COPY target/Food-0.0.1-SNAPSHOT.jar app.jar
+# SAO CHÉP FILE JAR
+# Lấy file JAR đã được build từ Stage 1 (builder)
+# Đường dẫn: /app/target/Tên_file_JAR.jar
+# (Giả sử file JAR của bạn có tên là Food-0.0.1-SNAPSHOT.jar)
+COPY --from=builder /app/target/Food-0.0.1-SNAPSHOT.jar /app/app.jar
 
+# CỔNG VÀ LỆNH CHẠY
 EXPOSE 8080
 
-# Add environment variables that can be overridden at runtime
-ENV SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/food_delivery_v2?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-ENV SPRING_DATASOURCE_USERNAME=root
-ENV SPRING_DATASOURCE_PASSWORD=lienminh95Ez
-ENV SPRING_JPA_HIBERNATE_DDL_AUTO=update
-ENV SERVER_PORT=8080
-ENV SERVER_ADDRESS=0.0.0.0
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
-  CMD wget -q --spider http://localhost:8080/actuator/health || exit 1
-
-# Run with environment variables and additional JVM options for container environment
-ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]
+# Lệnh khởi động ứng dụng
+ENTRYPOINT ["java", \
+            "-XX:+UseContainerSupport", \
+            "-Djava.security.egd=file:/dev/./urandom", \
+            "-jar", \
+            "/app/app.jar"]
