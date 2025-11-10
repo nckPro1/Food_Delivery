@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/food_delivery_v2?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=lienminh95Ez
+    volumes:
+      - ./uploads:/app/uploads
+    networks:
+      - food-network
+
+  mysql:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=lienminh95Ez
+      - MYSQL_DATABASE=food_delivery_v2
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - food-network
+
+volumes:
+  mysql-data:
+
+networks:
+  food-network:
+    driver: bridge
